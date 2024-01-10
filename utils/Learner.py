@@ -15,7 +15,6 @@ import logging
 import torch
 import os
 warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
-torch.autograd.set_detect_anomaly(True)
 
 
 class LinkConstraintsLoss(Module):
@@ -25,7 +24,7 @@ class LinkConstraintsLoss(Module):
     def forward(self, beta, e):
         i = torch.arange(beta.size(0)).reshape(-1, 1)
         j = torch.arange(beta.size(0))
-        loss = 0.5 * torch.sum(torch.sqrt((beta[i, 0] - e[i, j] * beta[j, 0])**2))
+        loss = 0.5 * torch.norm(beta[i, 0] - e[i, j] * beta[j, 0], p=2)
         return loss
 
 class Learner:
@@ -47,10 +46,10 @@ class Learner:
         self.logger = logging.getLogger(__name__)
         self.results = []
         self.hyperparameters = {
-            Hyperparameters.SECONDS       : self.seconds,
-            Hyperparameters.LEARNING_RATE : self.lr,
-            Hyperparameters.BATCH_SIZE    : self.batch_size,
-            Hyperparameters.EPOCHS        : self.epochs,
+            Hyperparameters.Names.SECONDS       : self.seconds,
+            Hyperparameters.Names.LEARNING_RATE : self.lr,
+            Hyperparameters.Names.BATCH_SIZE    : self.batch_size,
+            Hyperparameters.Names.EPOCHS        : self.epochs,
             **self.model.get_hyperparameters(),
         }
 

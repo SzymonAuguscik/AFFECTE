@@ -85,7 +85,7 @@ class EcgSignalLoader:
             self.X = self.tensor_manager.load(os.path.join(dirname, Paths.Files.FEATURES))
             self.y = self.tensor_manager.load(os.path.join(dirname, Paths.Files.LABELS))
 
-            if len(channels) < 2:
+            if len(channels) >= 1:
                 for i in range(len(self.X)):
                     self.X[i] = self.X[i][:, channels, :]
         else:

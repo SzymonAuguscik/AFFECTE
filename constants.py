@@ -64,83 +64,103 @@ class CV:
     X_TEST = "X_test"
     Y_TEST = "y_test"
 
-class CnnLayers:
-    class Layer1:
-        class Conv:
-            KERNEL_SIZE = 30
-            STRIDE = 1
-            PADDING = 1
-        class MaxPool:
-            KERNEL_SIZE = 5
-            STRIDE = 1
-            PADDING = 0
-    class Layer2:
-        class Conv:
-            KERNEL_SIZE = 10
-            STRIDE = 1
-            PADDING = 1
-        class MaxPool:
-            KERNEL_SIZE = 4
-            STRIDE = 1
-            PADDING = 0
-    class Layer3:
-        class Conv:
-            KERNEL_SIZE = 10
-            STRIDE = 1
-            PADDING = 1
-        class MaxPool:
-            KERNEL_SIZE = 4
-            STRIDE = 2
-            PADDING = 0
-    class Layer4:
-        class Conv:
-            KERNEL_SIZE = 5
-            STRIDE = 1
-            PADDING = 1
-        class MaxPool:
-            KERNEL_SIZE = 4
-            STRIDE = 2
-            PADDING = 0
-    class Layer5:
-        class Conv:
-            KERNEL_SIZE = 5
-            STRIDE = 1
-            PADDING = 1
-        class MaxPool:
-            KERNEL_SIZE = 3
-            STRIDE = 1
-            PADDING = 0
-    class Layer6:
-        class Conv:
-            KERNEL_SIZE = 3
-            STRIDE = 1
-            PADDING = 1
-        class MaxPool:
-            KERNEL_SIZE = 3
-            STRIDE = 1
-            PADDING = 0
-    class Layer7:
-        class Conv:
-            KERNEL_SIZE = 3
-            STRIDE = 1
-            PADDING = 1
-        class MaxPool:
-            KERNEL_SIZE = 2
-            STRIDE = 1
-            PADDING = 0
-
 class Time:
     SECONDS_IN_MINUTE = 60
     MINUTES_IN_HOUR = 60
 
 class Hyperparameters:
-    TRANSFORMER_DIMENSION = "transformerDimension"
-    ECG_CHANNELS = "ecgChannels"
-    WINDOW_LENGTH = "windowLength"
-    TRANSFORMER_HIDDEN_DIMENSION = "transformerHiddenDimension"
+    INITIAL_BIAS = 0.01
+    class Names:
+        TRANSFORMER_DIMENSION = "transformerDimension"
+        ECG_CHANNELS = "ecgChannels"
+        WINDOW_LENGTH = "windowLength"
+        TRANSFORMER_HIDDEN_DIMENSION = "transformerHiddenDimension"
 
-    SECONDS = "seconds"
-    LEARNING_RATE = "learningRate"
-    BATCH_SIZE = "batchSize"
-    EPOCHS = "epochs"
+        SECONDS = "seconds"
+        LEARNING_RATE = "learningRate"
+        BATCH_SIZE = "batchSize"
+        EPOCHS = "epochs"
 
+    class Cnn:
+        class Layer1:
+            class Conv:
+                KERNEL_SIZE = 30
+                STRIDE = 1
+                PADDING = 1
+            class MaxPool:
+                KERNEL_SIZE = 5
+                STRIDE = 1
+                PADDING = 0
+            DROPOUT = 0.03
+        class Layer2:
+            class Conv:
+                KERNEL_SIZE = 10
+                STRIDE = 1
+                PADDING = 1
+            class MaxPool:
+                KERNEL_SIZE = 4
+                STRIDE = 1
+                PADDING = 0
+            DROPOUT = 0.03
+        class Layer3:
+            class Conv:
+                KERNEL_SIZE = 10
+                STRIDE = 1
+                PADDING = 1
+            class MaxPool:
+                KERNEL_SIZE = 4
+                STRIDE = 2
+                PADDING = 0
+            DROPOUT = 0.03
+        class Layer4:
+            class Conv:
+                KERNEL_SIZE = 5
+                STRIDE = 1
+                PADDING = 1
+            class MaxPool:
+                KERNEL_SIZE = 4
+                STRIDE = 2
+                PADDING = 0
+            DROPOUT = 0.03
+        class Layer5:
+            class Conv:
+                KERNEL_SIZE = 5
+                STRIDE = 1
+                PADDING = 1
+            class MaxPool:
+                KERNEL_SIZE = 3
+                STRIDE = 1
+                PADDING = 0
+            DROPOUT = 0.03
+        class Layer6:
+            class Conv:
+                KERNEL_SIZE = 3
+                STRIDE = 1
+                PADDING = 1
+            class MaxPool:
+                KERNEL_SIZE = 3
+                STRIDE = 1
+                PADDING = 0
+            DROPOUT = 0.03
+        class Layer7:
+            class Conv:
+                KERNEL_SIZE = 3
+                STRIDE = 1
+                PADDING = 1
+            class MaxPool:
+                KERNEL_SIZE = 2
+                STRIDE = 1
+                PADDING = 0
+            DROPOUT = 0.03
+
+    class Transformer:
+        HIDDEN_LAYER = 256
+        N_HEAD = 16
+        LAYER_NORM_EPS = 1e-6
+
+    class FeedForwardClassifier:
+        HIDDEN_LAYER_DIMENSION = 1024
+        class Layer1:
+            DROPOUT = 0.03
+        class Layer2:
+            DROPOUT = 0.03
