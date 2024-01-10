@@ -1,5 +1,6 @@
 from torch.nn import Module, TransformerEncoder, TransformerEncoderLayer, LeakyReLU
 from torch.nn.init import xavier_uniform_
+from constants import Hyperparameters
 
 import logging
 # import torch
@@ -14,12 +15,12 @@ class Transformer(Module):
         # self.positional_encoding = self.create_positional_encoding()
 
         encoder_layer = encoder_layer=TransformerEncoderLayer(d_model=self.d_model,
-                                                              nhead=16,
+                                                              nhead=Hyperparameters.Transformer.N_HEAD,
                                                               dim_feedforward=hidden_dimension,
                                                               activation=LeakyReLU(),
                                                               batch_first=True,
                                                               norm_first=True,
-                                                              layer_norm_eps=1e-6)
+                                                              layer_norm_eps=Hyperparameters.Transformer.LAYER_NORM_EPS)
 
         self._init_weights(encoder_layer.linear1, encoder_layer.linear2)
         self.transformer = TransformerEncoder(encoder_layer=encoder_layer,
@@ -28,7 +29,7 @@ class Transformer(Module):
     def _init_weights(self, *layers):
         for layer in layers:
             xavier_uniform_(layer.weight)
-            layer.bias.data.fill_(0.01)
+            layer.bias.data.fill_(Hyperparameters.INITIAL_BIAS)
 
     # def create_positional_encoding(self, max_length=5000):
     #     position = torch.arange(0, max_length).unsqueeze(1)

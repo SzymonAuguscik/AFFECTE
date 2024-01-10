@@ -10,8 +10,10 @@ from utils.Learner import Learner
 from utils.EcgSignalLoader import EcgSignalLoader
 from constants import Paths
 
-import random
 import numpy as np
+
+import argparse
+import random
 import torch
 
 seed = 1234
@@ -21,11 +23,25 @@ random.seed(seed)
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(prog="AFFECTE",
+                                     description="Script to train and test model to classify arhythmia",
+                                     epilog="Atrial Fibrillation Finder from Electrocardiogram with Convolution and Transformer Encoder")
+    parser.add_argument("-c", "--channels", default=[0], nargs="+", choices=[0, 1], metavar="CHANNEL", type=int, help="ECG channels to be used in the training")
+    parser.add_argument("-s", "--seconds", default=10, choices=range(1, 60), metavar="[1-60]", type=int, help="length of the windows that the ECG signal will be split")
+    parser.add_argument("-e", "--epochs", default=100, choices=range(1, 500), metavar="[1-500]", type=int, help="training iterations")
+    parser.add_argument("-l", "--learning_rate", default=1e-3, type=float, help="learning rate to be used in the optimizer")
+    parser.add_argument("-b", "--batch_size", default=128, choices=range(1, 2048), metavar="[1-2048]", type=int, help="the data samples used per epoch")
+    parser.add_argument("-t", "--transformer_dimension", default=128, choices=range(1, 2048), metavar="[1-2048]", type=int, help="d_model for Transformer layer")
+    parser.add_argument("-d", "--dataset_custom_size", choices=range(1, 1_000_000), metavar="[1-1000000]", type=int, help="set how many samples should be used from dataset; use all samples if not set")
+    parser.add_argument("--use_cnn", action="store_true", help="if set, use CNN layer in the main model")
+    parser.add_argument("--use_transformer", action="store_true", help="if set, use Transformer layer in the main model")
+    args = parser.parse_args()
+
     logger = init_logger()
     logger.info("Loading subjects...")
 
-    channels = [0]
-    seconds = 10
+    channels = args.channels
+    seconds = args.seconds
     logger.debug(f"Data will be split into {seconds} seconds intervals")
 
     ecg_signal_loader = EcgSignalLoader(Paths.Directories.LONG_TERM_AF)
@@ -36,7 +52,7 @@ if __name__ == "__main__":
     # fig = plot_ecg(X[num][i, 0, :], rpeaks=False, sampling_rate=128, interval=[0,10])
     # print(y[num][i])
     # fig["ecg_plot"].savefig(f"subject_{num}_{'AF' if y[num][i] else 'SR'}.svg")
-    cross_validator = CrossValidator(X=X, y=y)
+    cross_validator = CrossValidator(X=X, y=y, dataset_custom_size=args.dataset_custom_size)
     # cross_validator.prepare()
     # cross_validator.do_cleanup()
     
@@ -51,17 +67,17 @@ if __name__ == "__main__":
         
         learner = Learner(model=AtrialFibrillationDetector(ecg_channels=len(channels),
                                                            window_length=X_train[0].size(1),
-                                                           transformer_dimension=128,
-                                                           use_cnn=False,
-                                                           use_transformer=False),
+                                                           transformer_dimension=args.transformer_dimension,
+                                                           use_cnn=args.use_cnn,
+                                                           use_transformer=args.use_transformer),
                           X_train=X_train,
                           y_train=y_train,
                           X_test=X_test,
                           y_test=y_test,
                           seconds=seconds,
-                          lr=1e-3,
-                          batch_size=100,
-                          epochs=100)
+                          lr=args.learning_rate,
+                          batch_size=args.batch_size,
+                          epochs=args.epochs)
         learner.train()
         learner.test(X_train, y_train)
         learner.test(X_test, y_test)

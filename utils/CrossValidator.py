@@ -8,9 +8,10 @@ import os
 
 
 class CrossValidator:
-    def __init__(self, X, y, k=5):
+    def __init__(self, X, y, dataset_custom_size=None, k=5):
         self.X = X
         self.y = y
+        self.dataset_custom_size = dataset_custom_size
         self.k = k
         self.test_size_coef = 1.0 / self.k
         self.logger = logging.getLogger(__name__)
@@ -48,10 +49,14 @@ class CrossValidator:
         return folds
 
     def prepare_fold(self, fold):
-        size = 1000
-
+        # TODO potential bug
         X_train, y_train = torch.cat(fold[CV.X_TRAIN]), torch.cat(fold[CV.Y_TRAIN])
         X_test, y_test = torch.cat(fold[CV.X_TEST]), torch.cat(fold[CV.Y_TEST])
+
+        dataset_size = y_train.size(0) + y_test.size(0)
+        size = self.dataset_custom_size if self.dataset_custom_size else dataset_size
+        self.logger.debug(f"Size = {size}")
+
         train_size = min(round((1 - self.test_size_coef) * size), 2 * (y_train == 0).size(0), 2 * (y_train == 1).size(0))
         test_size = min(round(self.test_size_coef * size), 2 * (y_test == 0).size(0), 2 * (y_test == 1).size(0))
         

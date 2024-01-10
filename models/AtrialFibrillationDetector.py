@@ -8,7 +8,9 @@ import logging
 
 
 class AtrialFibrillationDetector(Module):
-    def __init__(self, transformer_dimension, ecg_channels, window_length, transformer_hidden_dimension=256, use_cnn=True, use_transformer=True):
+    def __init__(self, transformer_dimension, ecg_channels, window_length,
+                 transformer_hidden_dimension=Hyperparameters.Transformer.HIDDEN_LAYER,
+                 use_cnn=False, use_transformer=False):
         super(AtrialFibrillationDetector, self).__init__()
         self.logger = logging.getLogger(__name__)
 
@@ -26,10 +28,10 @@ class AtrialFibrillationDetector(Module):
         self.ff = FeedForwardClassifier(ffc_input_dimension)
 
         self.hyperparameters = {
-            Hyperparameters.TRANSFORMER_DIMENSION        : transformer_dimension,
-            Hyperparameters.ECG_CHANNELS                 : ecg_channels,
-            Hyperparameters.WINDOW_LENGTH                : window_length,
-            Hyperparameters.TRANSFORMER_HIDDEN_DIMENSION : transformer_hidden_dimension,
+            Hyperparameters.Names.TRANSFORMER_DIMENSION        : transformer_dimension,
+            Hyperparameters.Names.ECG_CHANNELS                 : ecg_channels,
+            Hyperparameters.Names.WINDOW_LENGTH                : window_length,
+            Hyperparameters.Names.TRANSFORMER_HIDDEN_DIMENSION : transformer_hidden_dimension,
         }
 
         self.embedded = None

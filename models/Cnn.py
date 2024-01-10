@@ -1,6 +1,6 @@
 from torch.nn import Module, Conv1d, MaxPool1d, ReLU, BatchNorm1d, Linear, Flatten, Dropout
 from torch.nn.init import xavier_uniform_
-from constants import CnnLayers
+from constants import Hyperparameters
 
 import logging
 
@@ -14,93 +14,93 @@ class Cnn(Module):
         # Layer 1
         self.conv1 = Conv1d(in_channels=self.ecg_channels,
                             out_channels=self.ecg_channels,
-                            kernel_size=CnnLayers.Layer1.Conv.KERNEL_SIZE,
-                            stride=CnnLayers.Layer1.Conv.STRIDE, 
-                            padding=CnnLayers.Layer1.Conv.PADDING)
+                            kernel_size=Hyperparameters.Cnn.Layer1.Conv.KERNEL_SIZE,
+                            stride=Hyperparameters.Cnn.Layer1.Conv.STRIDE, 
+                            padding=Hyperparameters.Cnn.Layer1.Conv.PADDING)
         self.norm1 = BatchNorm1d(self.ecg_channels)
         self.relu1 = ReLU()
-        self.pool1 = MaxPool1d(kernel_size=CnnLayers.Layer1.MaxPool.KERNEL_SIZE,
-                               stride=CnnLayers.Layer1.MaxPool.STRIDE,
-                               padding=CnnLayers.Layer1.MaxPool.PADDING)
-        self.drop1 = Dropout(0.03)
+        self.pool1 = MaxPool1d(kernel_size=Hyperparameters.Cnn.Layer1.MaxPool.KERNEL_SIZE,
+                               stride=Hyperparameters.Cnn.Layer1.MaxPool.STRIDE,
+                               padding=Hyperparameters.Cnn.Layer1.MaxPool.PADDING)
+        self.drop1 = Dropout(Hyperparameters.Cnn.Layer1.DROPOUT)
 
         # Layer 2
         self.conv2 = Conv1d(in_channels=self.ecg_channels,
                             out_channels=self.ecg_channels,
-                            kernel_size=CnnLayers.Layer2.Conv.KERNEL_SIZE,
-                            stride=CnnLayers.Layer2.Conv.STRIDE, 
-                            padding=CnnLayers.Layer2.Conv.PADDING)
+                            kernel_size=Hyperparameters.Cnn.Layer2.Conv.KERNEL_SIZE,
+                            stride=Hyperparameters.Cnn.Layer2.Conv.STRIDE, 
+                            padding=Hyperparameters.Cnn.Layer2.Conv.PADDING)
         self.norm2 = BatchNorm1d(self.ecg_channels)
         self.relu2 = ReLU()
-        self.pool2 = MaxPool1d(kernel_size=CnnLayers.Layer2.MaxPool.KERNEL_SIZE,
-                               stride=CnnLayers.Layer2.MaxPool.STRIDE,
-                               padding=CnnLayers.Layer2.MaxPool.PADDING)
-        self.drop2 = Dropout(0.03)
+        self.pool2 = MaxPool1d(kernel_size=Hyperparameters.Cnn.Layer2.MaxPool.KERNEL_SIZE,
+                               stride=Hyperparameters.Cnn.Layer2.MaxPool.STRIDE,
+                               padding=Hyperparameters.Cnn.Layer2.MaxPool.PADDING)
+        self.drop2 = Dropout(Hyperparameters.Cnn.Layer2.DROPOUT)
 
         # Layer 3
         self.conv3 = Conv1d(in_channels=self.ecg_channels,
                             out_channels=self.ecg_channels,
-                            kernel_size=CnnLayers.Layer3.Conv.KERNEL_SIZE,
-                            stride=CnnLayers.Layer3.Conv.STRIDE, 
-                            padding=CnnLayers.Layer3.Conv.PADDING)
+                            kernel_size=Hyperparameters.Cnn.Layer3.Conv.KERNEL_SIZE,
+                            stride=Hyperparameters.Cnn.Layer3.Conv.STRIDE, 
+                            padding=Hyperparameters.Cnn.Layer3.Conv.PADDING)
         self.norm3 = BatchNorm1d(self.ecg_channels)
         self.relu3 = ReLU()
-        self.pool3 = MaxPool1d(kernel_size=CnnLayers.Layer3.MaxPool.KERNEL_SIZE,
-                               stride=CnnLayers.Layer3.MaxPool.STRIDE,
-                               padding=CnnLayers.Layer3.MaxPool.PADDING)
-        self.drop3 = Dropout(0.03)
+        self.pool3 = MaxPool1d(kernel_size=Hyperparameters.Cnn.Layer3.MaxPool.KERNEL_SIZE,
+                               stride=Hyperparameters.Cnn.Layer3.MaxPool.STRIDE,
+                               padding=Hyperparameters.Cnn.Layer3.MaxPool.PADDING)
+        self.drop3 = Dropout(Hyperparameters.Cnn.Layer3.DROPOUT)
 
         # Layer 4
         self.conv4 = Conv1d(in_channels=self.ecg_channels,
                             out_channels=self.ecg_channels,
-                            kernel_size=CnnLayers.Layer4.Conv.KERNEL_SIZE,
-                            stride=CnnLayers.Layer4.Conv.STRIDE, 
-                            padding=CnnLayers.Layer4.Conv.PADDING)
+                            kernel_size=Hyperparameters.Cnn.Layer4.Conv.KERNEL_SIZE,
+                            stride=Hyperparameters.Cnn.Layer4.Conv.STRIDE, 
+                            padding=Hyperparameters.Cnn.Layer4.Conv.PADDING)
         self.norm4 = BatchNorm1d(self.ecg_channels)
         self.relu4 = ReLU()
-        self.pool4 = MaxPool1d(kernel_size=CnnLayers.Layer4.MaxPool.KERNEL_SIZE,
-                               stride=CnnLayers.Layer4.MaxPool.STRIDE,
-                               padding=CnnLayers.Layer4.MaxPool.PADDING)
-        self.drop4 = Dropout(0.03)
+        self.pool4 = MaxPool1d(kernel_size=Hyperparameters.Cnn.Layer4.MaxPool.KERNEL_SIZE,
+                               stride=Hyperparameters.Cnn.Layer4.MaxPool.STRIDE,
+                               padding=Hyperparameters.Cnn.Layer4.MaxPool.PADDING)
+        self.drop4 = Dropout(Hyperparameters.Cnn.Layer4.DROPOUT)
 
         # Layer 5
         self.conv5 = Conv1d(in_channels=self.ecg_channels,
                             out_channels=self.ecg_channels,
-                            kernel_size=CnnLayers.Layer5.Conv.KERNEL_SIZE,
-                            stride=CnnLayers.Layer5.Conv.STRIDE, 
-                            padding=CnnLayers.Layer5.Conv.PADDING)
+                            kernel_size=Hyperparameters.Cnn.Layer5.Conv.KERNEL_SIZE,
+                            stride=Hyperparameters.Cnn.Layer5.Conv.STRIDE, 
+                            padding=Hyperparameters.Cnn.Layer5.Conv.PADDING)
         self.norm5 = BatchNorm1d(self.ecg_channels)
         self.relu5 = ReLU()
-        self.pool5 = MaxPool1d(kernel_size=CnnLayers.Layer5.MaxPool.KERNEL_SIZE,
-                               stride=CnnLayers.Layer5.MaxPool.STRIDE,
-                               padding=CnnLayers.Layer5.MaxPool.PADDING)
-        self.drop5 = Dropout(0.03)
+        self.pool5 = MaxPool1d(kernel_size=Hyperparameters.Cnn.Layer5.MaxPool.KERNEL_SIZE,
+                               stride=Hyperparameters.Cnn.Layer5.MaxPool.STRIDE,
+                               padding=Hyperparameters.Cnn.Layer5.MaxPool.PADDING)
+        self.drop5 = Dropout(Hyperparameters.Cnn.Layer5.DROPOUT)
 
         # Layer 6
         self.conv6 = Conv1d(in_channels=self.ecg_channels,
                             out_channels=self.ecg_channels,
-                            kernel_size=CnnLayers.Layer6.Conv.KERNEL_SIZE,
-                            stride=CnnLayers.Layer6.Conv.STRIDE, 
-                            padding=CnnLayers.Layer6.Conv.PADDING)
+                            kernel_size=Hyperparameters.Cnn.Layer6.Conv.KERNEL_SIZE,
+                            stride=Hyperparameters.Cnn.Layer6.Conv.STRIDE, 
+                            padding=Hyperparameters.Cnn.Layer6.Conv.PADDING)
         self.norm6 = BatchNorm1d(self.ecg_channels)
         self.relu6 = ReLU()
-        self.pool6 = MaxPool1d(kernel_size=CnnLayers.Layer6.MaxPool.KERNEL_SIZE,
-                               stride=CnnLayers.Layer6.MaxPool.STRIDE,
-                               padding=CnnLayers.Layer6.MaxPool.PADDING)
-        self.drop6 = Dropout(0.03)
+        self.pool6 = MaxPool1d(kernel_size=Hyperparameters.Cnn.Layer6.MaxPool.KERNEL_SIZE,
+                               stride=Hyperparameters.Cnn.Layer6.MaxPool.STRIDE,
+                               padding=Hyperparameters.Cnn.Layer6.MaxPool.PADDING)
+        self.drop6 = Dropout(Hyperparameters.Cnn.Layer6.DROPOUT)
 
         # Layer 7
         self.conv7 = Conv1d(in_channels=self.ecg_channels,
                             out_channels=self.ecg_channels,
-                            kernel_size=CnnLayers.Layer7.Conv.KERNEL_SIZE,
-                            stride=CnnLayers.Layer7.Conv.STRIDE, 
-                            padding=CnnLayers.Layer7.Conv.PADDING)
+                            kernel_size=Hyperparameters.Cnn.Layer7.Conv.KERNEL_SIZE,
+                            stride=Hyperparameters.Cnn.Layer7.Conv.STRIDE, 
+                            padding=Hyperparameters.Cnn.Layer7.Conv.PADDING)
         self.norm7 = BatchNorm1d(self.ecg_channels)
         self.relu7 = ReLU()
-        self.pool7 = MaxPool1d(kernel_size=CnnLayers.Layer7.MaxPool.KERNEL_SIZE,
-                               stride=CnnLayers.Layer7.MaxPool.STRIDE,
-                               padding=CnnLayers.Layer7.MaxPool.PADDING)
-        self.drop7 = Dropout(0.03)
+        self.pool7 = MaxPool1d(kernel_size=Hyperparameters.Cnn.Layer7.MaxPool.KERNEL_SIZE,
+                               stride=Hyperparameters.Cnn.Layer7.MaxPool.STRIDE,
+                               padding=Hyperparameters.Cnn.Layer7.MaxPool.PADDING)
+        self.drop7 = Dropout(Hyperparameters.Cnn.Layer7.DROPOUT)
 
         # Head
         self.flat = Flatten()
@@ -132,7 +132,7 @@ class Cnn(Module):
 
     def _init_weights(self):
         xavier_uniform_(self.linear.weight)
-        self.linear.bias.data.fill_(0.01)
+        self.linear.bias.data.fill_(Hyperparameters.INITIAL_BIAS)
 
     def forward(self, x):
         self.logger.debug("Starting forward pass!")
