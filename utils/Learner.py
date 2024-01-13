@@ -29,11 +29,12 @@ class LinkConstraintsLoss(Module):
 
 class Learner:
     def __init__(self, model, X_train, y_train, X_test, y_test, seconds, lr, batch_size, epochs):
-        self.model = model
-        self.X_train = X_train
-        self.y_train = y_train
-        self.X_test = X_test
-        self.y_test = y_test
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.model = model.to(self.device)
+        self.X_train = X_train.to(self.device)
+        self.y_train = y_train.to(self.device)
+        self.X_test = X_test.to(self.device)
+        self.y_test = y_test.to(self.device)
         self.seconds = seconds
         self.lr = lr
         self.batch_size = batch_size
@@ -114,6 +115,7 @@ class Learner:
 
     def train(self):
         self.logger.info("Training model...")
+        self.logger.debug(f"Using {self.device} device")
         self.logger.debug("Starting timer...")
         self.timer.start()
         train_data_loader = DataLoader(list(zip(self.X_train, self.y_train)), shuffle=True, batch_size=self.batch_size)
