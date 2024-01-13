@@ -18,12 +18,13 @@ warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
 
 
 class LinkConstraintsLoss(Module):
-    def __init__(self):
+    def __init__(self, device):
         super(LinkConstraintsLoss, self).__init__()
+        self.device = device
 
     def forward(self, beta, e):
-        i = torch.arange(beta.size(0)).reshape(-1, 1)
-        j = torch.arange(beta.size(0))
+        i = torch.arange(beta.size(0)).reshape(-1, 1).to(self.device)
+        j = torch.arange(beta.size(0)).to(self.device)
         loss = 0.5 * torch.norm(beta[i, 0] - e[i, j] * beta[j, 0], p=2)
         return loss
 
@@ -39,7 +40,7 @@ class Learner:
         self.lr = lr
         self.batch_size = batch_size
         self.entropy_loss = BCELoss()
-        self.lc_loss = LinkConstraintsLoss()
+        self.lc_loss = LinkConstraintsLoss(self.device)
         self.optimizer = Adam(self.model.parameters(), lr=self.lr)
         self.epochs = epochs
         self.visualizer = Visualizer()
@@ -59,15 +60,14 @@ class Learner:
         y_pred = np.array([])
 
         for x in test_data_loader:
-            y_pred = np.append(y_pred, self.model(x).round().detach().numpy())
+            y_pred = np.append(y_pred, self.model(x).round().cpu().detach().numpy())
 
         y_pred = y_pred.reshape(-1, 1)
         return y_pred
 
-    @classmethod
-    def _get_link_coefficients(cls, y_batch):
+    def _get_link_coefficients(self, y_batch):
         size = y_batch.size(0)
-        coefficients = torch.zeros(size, size)
+        coefficients = torch.zeros(size, size).to(self.device)
 
         for i in range(size):
             for j in range(size):
@@ -96,6 +96,10 @@ class Learner:
     def _save_training_time(self, file):
         self.logger.debug(f"Saving training time to {file}")
         file.write(f"{round(self.timer.get_time())}s\n")
+
+    def _save_device_name(self, file):
+        self.logger.debug(f"Saving device name to {file}")
+        file.write(f"{self.device}\n")
 
     def _plot_metrics(self, dirname):
         self.logger.debug("Creating plots...")
@@ -141,9 +145,9 @@ class Learner:
                 self.optimizer.step()
 
             self.model.eval()
-            y_train_true = self.y_train.detach().numpy()
+            y_train_true = self.y_train.cpu().detach().numpy()
             y_train_pred = self._make_predictions(self.X_train)
-            y_test_true = self.y_test.detach().numpy()
+            y_test_true = self.y_test.cpu().detach().numpy()
             y_test_pred = self._make_predictions(self.X_test)
 
             self.logger.info(f"Loss = {loss.item()}")
@@ -186,10 +190,12 @@ class Learner:
         self.logger.debug(f"Training time was {training_time}s")
 
     def test(self, X, y):
+        X = X.to(self.device)
+        y = y.to(self.device)
         self.logger.info("Testing model...")
         self.model.eval()
         y_pred = self._make_predictions(X)
-        y_true = y.detach().numpy()
+        y_true = y.cpu().detach().numpy()
 
         self.logger.info(f"{int(sum(y)[0])}/{y.shape[0]} samples from test set are AF")
         self.logger.info(f"{int(sum(y_pred)[0])}/{y_pred.shape[0]} samples marked as AF")
@@ -232,6 +238,7 @@ class Learner:
         with open(results_filename, 'w') as file:
             self._save_metrics(file)
             self._save_training_time(file)
+            self._save_device_name(file)
 
         self._plot_metrics(fold_dirname)
 
