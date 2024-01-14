@@ -25,7 +25,8 @@ random.seed(seed)
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog="AFFECTE",
                                      description="Script to train and test model to classify arhythmia",
-                                     epilog="Atrial Fibrillation Finder from Electrocardiogram with Convolution and Transformer Encoder")
+                                     epilog="Atrial Fibrillation Finder from Electrocardiogram with Convolution and Transformer Encoder",
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("-c", "--channels", default=[0], nargs="+", choices=[0, 1], metavar="CHANNEL", type=int, help="ECG channels to be used in the training")
     parser.add_argument("-s", "--seconds", default=10, choices=range(1, 60), metavar="[1-60]", type=int, help="length of the windows that the ECG signal will be split")
     parser.add_argument("-e", "--epochs", default=100, choices=range(1, 500), metavar="[1-500]", type=int, help="training iterations")
