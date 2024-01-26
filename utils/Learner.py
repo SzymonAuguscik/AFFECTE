@@ -3,8 +3,8 @@ from sklearn.exceptions import UndefinedMetricWarning
 from constants import Results, Paths, Hyperparameters
 from torch.utils.data import DataLoader
 from utils.Visualizer import Visualizer
-from utils.Timer import Timer
 from torch.nn import BCELoss, Module
+from utils.Timer import Timer
 from torch.optim import Adam
 from functools import reduce
 
@@ -54,6 +54,8 @@ class Learner:
             Hyperparameters.Names.EPOCHS        : self.epochs,
             **self.model.get_hyperparameters(),
         }
+        self.logger.debug(f"Layers: {len([param for param in model.parameters()])}")
+        self.logger.debug(f"Params: {sum(param.numel() for param in model.parameters())}")
 
     def _make_predictions(self, X):
         test_data_loader = DataLoader(X, batch_size=self.batch_size)

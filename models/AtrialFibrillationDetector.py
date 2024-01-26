@@ -19,12 +19,13 @@ class AtrialFibrillationDetector(Module):
         self.name = f"AFD({'CNN,' if self.use_cnn else ''}{'TN,' if self.use_transformer else ''}FFN)"
         self.logger.info(f"Model {self.name}")
 
-        self.cnn = Cnn(ecg_channels, transformer_dimension, window_length)
-        self.linear = Linear(window_length, transformer_dimension)
-        self.transformer = Transformer(transformer_dimension, hidden_dimension=transformer_hidden_dimension)
+        self.cnn = Cnn(ecg_channels, transformer_dimension, window_length) if self.use_cnn else None
+        self.linear = Linear(window_length, transformer_dimension) if self.use_transformer and not self.use_cnn else None
+        self.transformer = Transformer(transformer_dimension, hidden_dimension=transformer_hidden_dimension) if self.use_transformer else None
         
         ffc_input_dimension = transformer_dimension if self.use_cnn or self.use_transformer else window_length
         self.logger.debug(f"FeedForwardClassifier input dimension = {ffc_input_dimension}")
+        self.logger.info(f"Window size: {window_length}")
         self.ff = FeedForwardClassifier(ffc_input_dimension)
 
         self.hyperparameters = {
