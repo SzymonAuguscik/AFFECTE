@@ -25,7 +25,6 @@ class AtrialFibrillationDetector(Module):
         
         ffc_input_dimension = transformer_dimension if self.use_cnn or self.use_transformer else window_length
         self.logger.debug(f"FeedForwardClassifier input dimension = {ffc_input_dimension}")
-        self.logger.info(f"Window size: {window_length}")
         self.ff = FeedForwardClassifier(ffc_input_dimension)
 
         self.hyperparameters = {
