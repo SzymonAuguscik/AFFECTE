@@ -8,14 +8,14 @@ import logging
 
 
 class Transformer(Module):
-    def __init__(self, d_model, hidden_dimension):
+    def __init__(self, d_model, hidden_dimension, heads_number, encoder_layers):
         super(Transformer, self).__init__()
         self.logger = logging.getLogger(__name__)
         self.d_model = d_model
         # self.positional_encoding = self.create_positional_encoding()
 
         encoder_layer = encoder_layer=TransformerEncoderLayer(d_model=self.d_model,
-                                                              nhead=Hyperparameters.Transformer.N_HEAD,
+                                                              nhead=heads_number,
                                                               dim_feedforward=hidden_dimension,
                                                               activation=LeakyReLU(),
                                                               batch_first=True,
@@ -24,7 +24,7 @@ class Transformer(Module):
 
         self._init_weights(encoder_layer.linear1, encoder_layer.linear2)
         self.transformer = TransformerEncoder(encoder_layer=encoder_layer,
-                                              num_layers=8)
+                                              num_layers=encoder_layers)
 
     def _init_weights(self, *layers):
         for layer in layers:

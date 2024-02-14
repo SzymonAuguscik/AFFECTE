@@ -23,7 +23,7 @@ random.seed(seed)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(prog="AFFECTE",
+    parser = argparse.ArgumentParser(prog="affecte",
                                      description="Script to train and test model to classify arhythmia",
                                      epilog="Atrial Fibrillation Finder from Electrocardiogram with Convolution and Transformer Encoder",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -32,7 +32,10 @@ if __name__ == "__main__":
     parser.add_argument("-e", "--epochs", default=100, choices=range(1, 500), metavar="[1-500]", type=int, help="training iterations")
     parser.add_argument("-l", "--learning_rate", default=1e-3, type=float, help="learning rate to be used in the optimizer")
     parser.add_argument("-b", "--batch_size", default=128, choices=range(1, 2048), metavar="[1-2048]", type=int, help="the data samples used per epoch")
-    parser.add_argument("-t", "--transformer_dimension", default=128, choices=range(1, 2048), metavar="[1-2048]", type=int, help="d_model for Transformer layer")
+    parser.add_argument("-t", "--transformer_dimension", default=128, choices=range(1, 2048), metavar="[1-2048]", type=int, help="d_model for Transformer")
+    parser.add_argument("-f", "--transformer_hidden_dimension", default=256, choices=range(1, 2048), metavar="[1-2048]", type=int, help="dimension of feed forward layers in Transformer")
+    parser.add_argument("-a", "--transformer_heads", default=16, choices=range(1, 128), metavar="[1-128]", type=int, help="number of attention heads in Transformer")
+    parser.add_argument("-n", "--transformer_encoder_layers", default=8, choices=range(1, 64), metavar="[1-64]", type=int, help="number of encoding layers in Transformer")
     parser.add_argument("-d", "--dataset_custom_size", choices=range(1, 1_000_000), metavar="[1-1000000]", type=int, help="set how many samples should be used from dataset; use all samples if not set")
     parser.add_argument("--use_cnn", action="store_true", help="if set, use CNN layer in the main model")
     parser.add_argument("--use_transformer", action="store_true", help="if set, use Transformer layer in the main model")
@@ -69,6 +72,9 @@ if __name__ == "__main__":
         learner = Learner(model=AtrialFibrillationDetector(ecg_channels=len(channels),
                                                            window_length=X_train[0].size(1),
                                                            transformer_dimension=args.transformer_dimension,
+                                                           transformer_hidden_dimension=args.transformer_hidden_dimension,
+                                                           transformer_heads=args.transformer_heads,
+                                                           transformer_encoder_layers=args.transformer_encoder_layers,
                                                            use_cnn=args.use_cnn,
                                                            use_transformer=args.use_transformer),
                           X_train=X_train,

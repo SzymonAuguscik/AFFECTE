@@ -154,8 +154,8 @@ class Hyperparameters:
             DROPOUT = 0.03
 
     class Transformer:
-        HIDDEN_LAYER = 256
-        N_HEAD = 16
+        # HIDDEN_LAYER = 256
+        # N_HEAD = 16
         LAYER_NORM_EPS = 1e-6
 
     class FeedForwardClassifier:
