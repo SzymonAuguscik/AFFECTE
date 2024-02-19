@@ -75,6 +75,8 @@ class Hyperparameters:
         ECG_CHANNELS = "ecgChannels"
         WINDOW_LENGTH = "windowLength"
         TRANSFORMER_HIDDEN_DIMENSION = "transformerHiddenDimension"
+        TRANSFORMER_HEADS = "transformerHeads"
+        TRANSFORMER_ENCODER_LAYERS = "transformerEncoderLayers"
 
         SECONDS = "seconds"
         LEARNING_RATE = "learningRate"
@@ -154,8 +156,6 @@ class Hyperparameters:
             DROPOUT = 0.03
 
     class Transformer:
-        # HIDDEN_LAYER = 256
-        # N_HEAD = 16
         LAYER_NORM_EPS = 1e-6
 
     class FeedForwardClassifier:
