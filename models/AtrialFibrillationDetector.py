@@ -35,6 +35,8 @@ class AtrialFibrillationDetector(Module):
             Hyperparameters.Names.ECG_CHANNELS                 : ecg_channels,
             Hyperparameters.Names.WINDOW_LENGTH                : window_length,
             Hyperparameters.Names.TRANSFORMER_HIDDEN_DIMENSION : transformer_hidden_dimension,
+            Hyperparameters.Names.TRANSFORMER_HEADS            : transformer_heads,
+            Hyperparameters.Names.TRANSFORMER_ENCODER_LAYERS   : transformer_encoder_layers,
         }
 
         self.embedded = None
