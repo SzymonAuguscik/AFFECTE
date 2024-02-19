@@ -37,6 +37,7 @@ if __name__ == "__main__":
     parser.add_argument("-a", "--transformer_heads", default=16, choices=range(1, 128), metavar="[1-128]", type=int, help="number of attention heads in Transformer")
     parser.add_argument("-n", "--transformer_encoder_layers", default=8, choices=range(1, 64), metavar="[1-64]", type=int, help="number of encoding layers in Transformer")
     parser.add_argument("-d", "--dataset_custom_size", choices=range(1, 1_000_000), metavar="[1-1000000]", type=int, help="set how many samples should be used from dataset; use all samples if not set")
+    parser.add_argument("-v", "--validation_step", default=0, choices=range(0, 4), metavar="[0-4]", type=int, help="choose which cross validation fold should be used as test set")
     parser.add_argument("--use_cnn", action="store_true", help="if set, use CNN layer in the main model")
     parser.add_argument("--use_transformer", action="store_true", help="if set, use Transformer layer in the main model")
     args = parser.parse_args()
@@ -56,38 +57,37 @@ if __name__ == "__main__":
     # fig = plot_ecg(X[num][i, 0, :], rpeaks=False, sampling_rate=128, interval=[0,10])
     # print(y[num][i])
     # fig["ecg_plot"].savefig(f"subject_{num}_{'AF' if y[num][i] else 'SR'}.svg")
-    cross_validator = CrossValidator(X=X, y=y, dataset_custom_size=args.dataset_custom_size)
-    # cross_validator.prepare()
-    # cross_validator.do_cleanup()
     
-    for i, subjects_split in enumerate(cross_validator):
-        logger.info(f"Cross validation fold #{i + 1}")
+    # for i, subjects_split in enumerate(cross_validator):
+    validation_step = args.validation_step
+    logger.info(f"Cross validation fold #{validation_step + 1}")
 
-        X_train, y_train, X_test, y_test = cross_validator.prepare_fold(subjects_split)
+    cross_validator = CrossValidator(X=X, y=y, dataset_custom_size=args.dataset_custom_size)
+    X_train, y_train, X_test, y_test = cross_validator.prepare_fold(cross_validator[validation_step])
 
-        logger.info(f"Number of training examples: {len(X_train)}")
-        logger.info(f"Number of test examples: {len(X_test)}")
-        logger.info(f"Arrhythmia fraction = {(sum(y_train) + sum(y_test)) / (len(y_train) + len(y_test))}")
-        
-        learner = Learner(model=AtrialFibrillationDetector(ecg_channels=len(channels),
-                                                           window_length=X_train[0].size(1),
-                                                           transformer_dimension=args.transformer_dimension,
-                                                           transformer_hidden_dimension=args.transformer_hidden_dimension,
-                                                           transformer_heads=args.transformer_heads,
-                                                           transformer_encoder_layers=args.transformer_encoder_layers,
-                                                           use_cnn=args.use_cnn,
-                                                           use_transformer=args.use_transformer),
-                          X_train=X_train,
-                          y_train=y_train,
-                          X_test=X_test,
-                          y_test=y_test,
-                          seconds=seconds,
-                          lr=args.learning_rate,
-                          batch_size=args.batch_size,
-                          epochs=args.epochs)
-        learner.train()
-        learner.test(X_train, y_train)
-        learner.test(X_test, y_test)
-        learner.save_results(fold=str(i))
-        break
+    logger.info(f"Number of training examples: {len(X_train)}")
+    logger.info(f"Number of test examples: {len(X_test)}")
+    logger.info(f"Arrhythmia fraction = {(sum(y_train) + sum(y_test)) / (len(y_train) + len(y_test))}")
+    
+    learner = Learner(model=AtrialFibrillationDetector(ecg_channels=len(channels),
+                                                        window_length=X_train[0].size(1),
+                                                        transformer_dimension=args.transformer_dimension,
+                                                        transformer_hidden_dimension=args.transformer_hidden_dimension,
+                                                        transformer_heads=args.transformer_heads,
+                                                        transformer_encoder_layers=args.transformer_encoder_layers,
+                                                        use_cnn=args.use_cnn,
+                                                        use_transformer=args.use_transformer),
+                      X_train=X_train,
+                      y_train=y_train,
+                      X_test=X_test,
+                      y_test=y_test,
+                      seconds=seconds,
+                      lr=args.learning_rate,
+                      batch_size=args.batch_size,
+                      epochs=args.epochs)
+    learner.train()
+    learner.test(X_train, y_train)
+    learner.test(X_test, y_test)
+    learner.save_results(fold=str(validation_step))
+        # break
 

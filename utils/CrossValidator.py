@@ -20,6 +20,9 @@ class CrossValidator:
     def __iter__(self):
         return iter(self.folds)
 
+    def __getitem__(self, number):
+        return self.folds[number]
+
     def _cross_validation_split(self):
         X, y = shuffle(self.X, self.y)
         step = len(X) // self.k
