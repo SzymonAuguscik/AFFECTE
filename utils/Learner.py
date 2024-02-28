@@ -1,11 +1,12 @@
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from sklearn.exceptions import UndefinedMetricWarning
 from constants import Results, Paths, Hyperparameters
+from typing import Dict, List, TextIO, Optional
 from torch.utils.data import DataLoader
 from utils.Visualizer import Visualizer
+from torch.optim import Adam, Optimizer
 from torch.nn import BCELoss, Module
 from utils.Timer import Timer
-from torch.optim import Adam
 from functools import reduce
 
 import numpy as np
@@ -18,36 +19,37 @@ warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
 
 
 class LinkConstraintsLoss(Module):
-    def __init__(self, device):
+    def __init__(self, device: torch.device) -> None:
         super(LinkConstraintsLoss, self).__init__()
-        self.device = device
+        self.device: torch.device = device
 
-    def forward(self, beta, e):
-        i = torch.arange(beta.size(0)).reshape(-1, 1).to(self.device)
-        j = torch.arange(beta.size(0)).to(self.device)
-        loss = 0.5 * torch.norm(beta[i, 0] - e[i, j] * beta[j, 0], p=2)
+    def forward(self, beta, e) -> float:
+        i: torch.Tensor = torch.arange(beta.size(0)).reshape(-1, 1).to(self.device)
+        j: torch.Tensor = torch.arange(beta.size(0)).to(self.device)
+        loss: float = 0.5 * torch.norm(beta[i, 0] - e[i, j] * beta[j, 0], p=2)
         return loss
 
 class Learner:
-    def __init__(self, model, X_train, y_train, X_test, y_test, seconds, lr, batch_size, epochs):
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.model = model.to(self.device)
-        self.X_train = X_train.to(self.device)
-        self.y_train = y_train.to(self.device)
-        self.X_test = X_test.to(self.device)
-        self.y_test = y_test.to(self.device)
-        self.seconds = seconds
-        self.lr = lr
-        self.batch_size = batch_size
-        self.entropy_loss = BCELoss()
-        self.lc_loss = LinkConstraintsLoss(self.device)
-        self.optimizer = Adam(self.model.parameters(), lr=self.lr)
-        self.epochs = epochs
-        self.visualizer = Visualizer()
-        self.timer = Timer()
-        self.logger = logging.getLogger(__name__)
-        self.results = []
-        self.hyperparameters = {
+    def __init__(self, model: Module, X_train: torch.Tensor, y_train: torch.Tensor, X_test: torch.Tensor, y_test: torch.Tensor,
+                 seconds: int, lr: float, batch_size: int, epochs: int) -> None:
+        self.device: torch.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.model: Module = model.to(self.device)
+        self.X_train: torch.Tensor = X_train.to(self.device)
+        self.y_train: torch.Tensor = y_train.to(self.device)
+        self.X_test: torch.Tensor = X_test.to(self.device)
+        self.y_test: torch.Tensor = y_test.to(self.device)
+        self.seconds: int = seconds
+        self.lr: float = lr
+        self.batch_size: int = batch_size
+        self.entropy_loss: Module = BCELoss()
+        self.lc_loss: Module = LinkConstraintsLoss(self.device)
+        self.optimizer: Optimizer = Adam(self.model.parameters(), lr=self.lr)
+        self.epochs: int = epochs
+        self.visualizer: Visualizer = Visualizer()
+        self.timer: Timer = Timer()
+        self.logger: logging.Logger = logging.getLogger(__name__)
+        self.results: List[Dict[str, float]] = []
+        self.hyperparameters: Dict[str, float] = {
             Hyperparameters.Names.SECONDS       : self.seconds,
             Hyperparameters.Names.LEARNING_RATE : self.lr,
             Hyperparameters.Names.BATCH_SIZE    : self.batch_size,
@@ -57,9 +59,9 @@ class Learner:
         self.logger.debug(f"Layers: {len([param for param in model.parameters()])}")
         self.logger.debug(f"Params: {sum(param.numel() for param in model.parameters())}")
 
-    def _make_predictions(self, X):
-        test_data_loader = DataLoader(X, batch_size=self.batch_size)
-        y_pred = np.array([])
+    def _make_predictions(self, X: torch.Tensor) -> np.ndarray:
+        test_data_loader: DataLoader = DataLoader(X, batch_size=self.batch_size)
+        y_pred: np.ndarray = np.array([])
 
         for x in test_data_loader:
             y_pred = np.append(y_pred, self.model(x).round().cpu().detach().numpy())
@@ -67,9 +69,9 @@ class Learner:
         y_pred = y_pred.reshape(-1, 1)
         return y_pred
 
-    def _get_link_coefficients(self, y_batch):
-        size = y_batch.size(0)
-        coefficients = torch.zeros(size, size).to(self.device)
+    def _get_link_coefficients(self, y_batch: torch.Tensor) -> torch.Tensor:
+        size: int = y_batch.size(0)
+        coefficients: torch.Tensor = torch.zeros(size, size).to(self.device)
 
         for i in range(size):
             for j in range(size):
@@ -79,13 +81,13 @@ class Learner:
 
         return coefficients
 
-    def _build_dirname(self):
-        dirname = reduce(lambda directory_name, parameter: f"{directory_name}_{parameter[0]}{parameter[1]}",
-                         self.hyperparameters.items(),
-                         self.model.name)
+    def _build_dirname(self) -> str:
+        dirname: str = reduce(lambda directory_name, parameter: f"{directory_name}_{parameter[0]}{parameter[1]}",
+                              self.hyperparameters.items(),
+                              self.model.name)
         return os.path.join(Paths.Directories.RESULTS, dirname)
 
-    def _save_metrics(self, file):
+    def _save_metrics(self, file: TextIO) -> None:
         self.logger.debug(f"Saving metrics to {file}")
         file.write(f"{Results.Metrics.ACCURACY},{Results.Metrics.F1_SCORE},{Results.Metrics.PRECISION},{Results.Metrics.RECALL}\n")
 
@@ -95,15 +97,15 @@ class Learner:
                        f"{result[Results.Metrics.PRECISION]},"
                        f"{result[Results.Metrics.RECALL]}\n")
 
-    def _save_training_time(self, file):
+    def _save_training_time(self, file: TextIO) -> None:
         self.logger.debug(f"Saving training time to {file}")
         file.write(f"{round(self.timer.get_time())}s\n")
 
-    def _save_device_name(self, file):
+    def _save_device_name(self, file: TextIO) -> None:
         self.logger.debug(f"Saving device name to {file}")
         file.write(f"{self.device}\n")
 
-    def _plot_metrics(self, dirname):
+    def _plot_metrics(self, dirname: str) -> None:
         self.logger.debug("Creating plots...")
         self.visualizer.plot_train_loss(os.path.join(dirname, Results.Visualization.Files.LOSS))
         self.visualizer.plot_learning_curves(os.path.join(dirname, Results.Visualization.Files.ACCURACY),\
@@ -119,26 +121,26 @@ class Learner:
                                              Results.Metrics.TRAIN_RECALL,\
                                              Results.Metrics.TEST_RECALL)
 
-    def train(self):
+    def train(self) -> None:
         self.logger.info("Training model...")
         self.logger.debug(f"Using {self.device} device")
         self.logger.debug("Starting timer...")
         self.timer.start()
-        train_data_loader = DataLoader(list(zip(self.X_train, self.y_train)), shuffle=True, batch_size=self.batch_size)
+        train_data_loader: DataLoader = DataLoader(list(zip(self.X_train, self.y_train)), shuffle=True, batch_size=self.batch_size)
         
         for epoch in range(self.epochs):
             self.model.train()
             self.logger.info(f"Epoch no. {epoch + 1}")
 
-            loss = 0
+            loss: float = 0
             for (x, y) in train_data_loader:
-                pred = self.model(x)
+                pred: torch.Tensor = self.model(x)
                 self.logger.debug("Calculating loss...")
                 loss = self.entropy_loss(pred, y)
 
-                embedded = self.model.get_embedded()
+                embedded: Optional[torch.Tensor] = self.model.get_embedded()
                 if embedded is not None:
-                    link_coefficients = self._get_link_coefficients(y)
+                    link_coefficients: np.ndarray = self._get_link_coefficients(y)
                     loss += 1e-8 * self.lc_loss(embedded, link_coefficients)
                 
                 self.logger.debug("Updating weights...")
@@ -147,27 +149,27 @@ class Learner:
                 self.optimizer.step()
 
             self.model.eval()
-            y_train_true = self.y_train.cpu().detach().numpy()
-            y_train_pred = self._make_predictions(self.X_train)
-            y_test_true = self.y_test.cpu().detach().numpy()
-            y_test_pred = self._make_predictions(self.X_test)
+            y_train_true: np.ndarray = self.y_train.cpu().detach().numpy()
+            y_train_pred: np.ndarray = self._make_predictions(self.X_train)
+            y_test_true: np.ndarray = self.y_test.cpu().detach().numpy()
+            y_test_pred: np.ndarray = self._make_predictions(self.X_test)
 
             self.logger.info(f"Loss = {loss.item()}")
 
-            train_accuracy = accuracy_score(y_train_true, y_train_pred)
-            train_f1_score = f1_score(y_train_true, y_train_pred)
-            train_precision = precision_score(y_train_true, y_train_pred)
-            train_recall = recall_score(y_train_true, y_train_pred)
+            train_accuracy: float = accuracy_score(y_train_true, y_train_pred)
+            train_f1_score: float = f1_score(y_train_true, y_train_pred)
+            train_precision: float = precision_score(y_train_true, y_train_pred)
+            train_recall: float = recall_score(y_train_true, y_train_pred)
 
             self.logger.debug(f"Accuracy score = {train_accuracy}")
             self.logger.debug(f"F1 score = {train_f1_score}")
             self.logger.debug(f"Precision score = {train_precision}")
             self.logger.info(f"Recall score = {train_recall}")
 
-            test_accuracy = accuracy_score(y_test_true, y_test_pred)
-            test_f1_score = f1_score(y_test_true, y_test_pred)
-            test_precision = precision_score(y_test_true, y_test_pred)
-            test_recall = recall_score(y_test_true, y_test_pred)
+            test_accuracy: float = accuracy_score(y_test_true, y_test_pred)
+            test_f1_score: float = f1_score(y_test_true, y_test_pred)
+            test_precision: float = precision_score(y_test_true, y_test_pred)
+            test_recall: float = recall_score(y_test_true, y_test_pred)
 
             self.logger.debug(f"Accuracy score = {test_accuracy}")
             self.logger.debug(f"F1 score = {test_f1_score}")
@@ -188,31 +190,31 @@ class Learner:
         
         self.logger.debug("Stopping timer...")
         self.timer.stop()
-        training_time = round(self.timer.get_time())
+        training_time: float = round(self.timer.get_time())
         self.logger.debug(f"Training time was {training_time}s")
 
-    def test(self, X, y):
+    def test(self, X: torch.Tensor, y: torch.Tensor) -> None:
         X = X.to(self.device)
         y = y.to(self.device)
         self.logger.info("Testing model...")
         self.model.eval()
-        y_pred = self._make_predictions(X)
-        y_true = y.cpu().detach().numpy()
+        y_pred: np.ndarray = self._make_predictions(X)
+        y_true: np.ndarray = y.cpu().detach().numpy()
 
         self.logger.info(f"{int(sum(y)[0])}/{y.shape[0]} samples from test set are AF")
         self.logger.info(f"{int(sum(y_pred)[0])}/{y_pred.shape[0]} samples marked as AF")
 
-        accuracy = accuracy_score(y_true, y_pred)
-        f1_metric = f1_score(y_true, y_pred)
-        precision = precision_score(y_true, y_pred)
-        recall = recall_score(y_true, y_pred)
+        accuracy: float = accuracy_score(y_true, y_pred)
+        f1_metric: float = f1_score(y_true, y_pred)
+        precision: float = precision_score(y_true, y_pred)
+        recall: float = recall_score(y_true, y_pred)
 
         self.logger.debug(f"Accuracy: {accuracy}")
         self.logger.debug(f"F1 score: {f1_metric}")
         self.logger.debug(f"Precision: {precision}")
         self.logger.debug(f"Recall: {recall}")
 
-        results = {
+        results: Dict[str, float] = {
             Results.Metrics.ACCURACY  : accuracy,
             Results.Metrics.F1_SCORE  : f1_metric,
             Results.Metrics.PRECISION : precision,
@@ -220,12 +222,12 @@ class Learner:
         }
         self.results.append(results)
 
-    def save_results(self, fold):
+    def save_results(self, fold) -> None:
         self.logger.debug("Saving results...")
         if not os.path.exists(Paths.Directories.RESULTS):
             os.mkdir(Paths.Directories.RESULTS)
 
-        dirname = self._build_dirname()
+        dirname: str = self._build_dirname()
         if not os.path.exists(dirname):
             os.mkdir(dirname)
 
@@ -235,7 +237,7 @@ class Learner:
         if not os.path.exists(fold_dirname):
             os.mkdir(fold_dirname)
 
-        results_filename = os.path.join(fold_dirname, Paths.Files.RESULTS)
+        results_filename: str = os.path.join(fold_dirname, Paths.Files.RESULTS)
 
         with open(results_filename, 'w') as file:
             self._save_metrics(file)
