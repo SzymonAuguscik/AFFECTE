@@ -1,20 +1,19 @@
-from torch.nn import Module, Linear, Sigmoid, ReLU, Dropout
 from constants import Hyperparameters
 
 import logging
 import torch
 
 
-class FeedForwardClassifier(Module):
+class FeedForwardClassifier(torch.nn.Module):
     def __init__(self, in_features: int) -> None:
         super(FeedForwardClassifier, self).__init__()
         self.logger: logging.Logger = logging.getLogger(__name__)
-        self.linear1: Linear = Linear(in_features=in_features, out_features=Hyperparameters.FeedForwardClassifier.HIDDEN_LAYER_DIMENSION)
-        self.drop1: Dropout = Dropout(Hyperparameters.FeedForwardClassifier.Layer1.DROPOUT)
-        self.relu: ReLU = ReLU()
-        self.linear2: Linear = Linear(in_features=Hyperparameters.FeedForwardClassifier.HIDDEN_LAYER_DIMENSION, out_features=1)
-        self.drop2: Dropout = Dropout(Hyperparameters.FeedForwardClassifier.Layer2.DROPOUT)
-        self.sigmoid: Sigmoid = Sigmoid()
+        self.linear1: torch.nn.Linear = torch.nn.Linear(in_features=in_features, out_features=Hyperparameters.FeedForwardClassifier.HIDDEN_LAYER_DIMENSION)
+        self.drop1: torch.nn.Dropout = torch.nn.Dropout(Hyperparameters.FeedForwardClassifier.Layer1.DROPOUT)
+        self.relu: torch.nn.ReLU = torch.nn.ReLU()
+        self.linear2: torch.nn.Linear = torch.nn.Linear(in_features=Hyperparameters.FeedForwardClassifier.HIDDEN_LAYER_DIMENSION, out_features=1)
+        self.drop2: torch.nn.Dropout = torch.nn.Dropout(Hyperparameters.FeedForwardClassifier.Layer2.DROPOUT)
+        self.sigmoid: torch.nn.Sigmoid = torch.nn.Sigmoid()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         self.logger.debug("Starting forward pass!")

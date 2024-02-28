@@ -1,7 +1,6 @@
 from .FeedForwardClassifier import FeedForwardClassifier
 from constants import Hyperparameters
 from .Transformer import Transformer
-from torch.nn import Module, Linear
 from typing import Dict, Optional
 from .Cnn import Cnn
 
@@ -9,7 +8,7 @@ import logging
 import torch
 
 
-class AtrialFibrillationDetector(Module):
+class AtrialFibrillationDetector(torch.nn.Module):
     def __init__(self, transformer_dimension: int, ecg_channels: int, window_length: int,
                  transformer_hidden_dimension: int, transformer_heads: int, transformer_encoder_layers: int,
                  use_cnn: bool = False, use_transformer: bool = False) -> None:
@@ -22,7 +21,7 @@ class AtrialFibrillationDetector(Module):
         self.logger.info(f"Model {self.name}")
 
         self.cnn: Cnn = Cnn(ecg_channels, transformer_dimension, window_length) if self.use_cnn else None
-        self.linear: Linear = Linear(window_length, transformer_dimension) if self.use_transformer and not self.use_cnn else None
+        self.linear: torch.nn.Linear = torch.nn.Linear(window_length, transformer_dimension) if self.use_transformer and not self.use_cnn else None
         self.transformer: Transformer = Transformer(d_model=transformer_dimension,
                                                     hidden_dimension=transformer_hidden_dimension,
                                                     heads_number=transformer_heads,

@@ -2,10 +2,7 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 from sklearn.exceptions import UndefinedMetricWarning
 from constants import Results, Paths, Hyperparameters
 from typing import Dict, List, TextIO, Optional
-from torch.utils.data import DataLoader
 from utils.Visualizer import Visualizer
-from torch.optim import Adam, Optimizer
-from torch.nn import BCELoss, Module
 from utils.Timer import Timer
 from functools import reduce
 
@@ -18,22 +15,22 @@ import os
 warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
 
 
-class LinkConstraintsLoss(Module):
+class LinkConstraintsLoss(torch.nn.Module):
     def __init__(self, device: torch.device) -> None:
         super(LinkConstraintsLoss, self).__init__()
         self.device: torch.device = device
 
-    def forward(self, beta, e) -> float:
+    def forward(self, beta: torch.Tensor, e: np.ndarray) -> float:
         i: torch.Tensor = torch.arange(beta.size(0)).reshape(-1, 1).to(self.device)
         j: torch.Tensor = torch.arange(beta.size(0)).to(self.device)
         loss: float = 0.5 * torch.norm(beta[i, 0] - e[i, j] * beta[j, 0], p=2)
         return loss
 
 class Learner:
-    def __init__(self, model: Module, X_train: torch.Tensor, y_train: torch.Tensor, X_test: torch.Tensor, y_test: torch.Tensor,
+    def __init__(self, model: torch.nn.Module, X_train: torch.Tensor, y_train: torch.Tensor, X_test: torch.Tensor, y_test: torch.Tensor,
                  seconds: int, lr: float, batch_size: int, epochs: int) -> None:
         self.device: torch.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.model: Module = model.to(self.device)
+        self.model: torch.nn.Module = model.to(self.device)
         self.X_train: torch.Tensor = X_train.to(self.device)
         self.y_train: torch.Tensor = y_train.to(self.device)
         self.X_test: torch.Tensor = X_test.to(self.device)
@@ -41,9 +38,9 @@ class Learner:
         self.seconds: int = seconds
         self.lr: float = lr
         self.batch_size: int = batch_size
-        self.entropy_loss: Module = BCELoss()
-        self.lc_loss: Module = LinkConstraintsLoss(self.device)
-        self.optimizer: Optimizer = Adam(self.model.parameters(), lr=self.lr)
+        self.entropy_loss: torch.nn.Module = torch.nn.BCELoss()
+        self.lc_loss: torch.nn.Module = LinkConstraintsLoss(self.device)
+        self.optimizer: torch.optim.Optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)
         self.epochs: int = epochs
         self.visualizer: Visualizer = Visualizer()
         self.timer: Timer = Timer()
@@ -60,7 +57,7 @@ class Learner:
         self.logger.debug(f"Params: {sum(param.numel() for param in model.parameters())}")
 
     def _make_predictions(self, X: torch.Tensor) -> np.ndarray:
-        test_data_loader: DataLoader = DataLoader(X, batch_size=self.batch_size)
+        test_data_loader: torch.utils.data.DataLoader = torch.utils.data.DataLoader(X, batch_size=self.batch_size)
         y_pred: np.ndarray = np.array([])
 
         for x in test_data_loader:
@@ -126,7 +123,7 @@ class Learner:
         self.logger.debug(f"Using {self.device} device")
         self.logger.debug("Starting timer...")
         self.timer.start()
-        train_data_loader: DataLoader = DataLoader(list(zip(self.X_train, self.y_train)), shuffle=True, batch_size=self.batch_size)
+        train_data_loader: torch.utils.data.DataLoader = torch.utils.data.DataLoader(list(zip(self.X_train, self.y_train)), shuffle=True, batch_size=self.batch_size)
         
         for epoch in range(self.epochs):
             self.model.train()
