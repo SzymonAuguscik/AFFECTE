@@ -51,7 +51,7 @@ class Learner:
             Hyperparameters.Names.LEARNING_RATE : self._lr,
             Hyperparameters.Names.BATCH_SIZE    : self._batch_size,
             Hyperparameters.Names.EPOCHS        : self._epochs,
-            **self._model.get_hyperparameters(),
+            **self._model.hyperparameters,
         }
         self._logger.debug(f"Layers: {len([param for param in model.parameters()])}")
         self._logger.debug(f"Params: {sum(param.numel() for param in model.parameters())}")
@@ -81,7 +81,7 @@ class Learner:
     def _build_dirname(self) -> str:
         dirname: str = reduce(lambda directory_name, parameter: f"{directory_name}_{parameter[0]}{parameter[1]}",
                               self._hyperparameters.items(),
-                              self._model._name)
+                              self._model.name)
         return os.path.join(Paths.Directories.RESULTS, dirname)
 
     def _save_metrics(self, file: TextIO) -> None:
@@ -135,7 +135,7 @@ class Learner:
                 self._logger.debug("Calculating loss...")
                 loss = self._entropy_loss(pred, y)
 
-                embedded: Optional[torch.Tensor] = self._model.get_embedded()
+                embedded: Optional[torch.Tensor] = self._model.embedded
                 if embedded is not None:
                     link_coefficients: np.ndarray = self._get_link_coefficients(y)
                     loss += 1e-8 * self._lc_loss(embedded, link_coefficients)

@@ -19,7 +19,7 @@ class Transformer(torch.nn.Module):
 
         self._init_weights(encoder_layer.linear1, encoder_layer.linear2)
         self._transformer: torch.nn.TransformerEncoder = torch.nn.TransformerEncoder(encoder_layer=encoder_layer,
-                                                                                    num_layers=encoder_layers)
+                                                                                     num_layers=encoder_layers)
 
     def _init_weights(self, *layers: torch.nn.Linear) -> None:
         for layer in layers:

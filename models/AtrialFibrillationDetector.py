@@ -42,11 +42,17 @@ class AtrialFibrillationDetector(torch.nn.Module):
 
         self._embedded: Optional[torch.Tensor] = None
 
-    def get_embedded(self) -> Optional[torch.Tensor]:
-        return self._embedded
+    @property
+    def name(self) -> str:
+        return self._name
 
-    def get_hyperparameters(self) -> Dict[str, int]:
+    @property
+    def hyperparameters(self) -> Dict[str, int]:
         return self._hyperparameters
+
+    @property
+    def embedded(self) -> Optional[torch.Tensor]:
+        return self._embedded
     
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         self._logger.debug("Starting forward pass!")
