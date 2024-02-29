@@ -14,12 +14,12 @@ import os
 
 class EcgSignalLoader:
     def __init__(self, dataset_path: str) -> None:
-        self.logger: logging.Logger = logging.getLogger(__name__)
-        self.tensor_manager: TensorManager = TensorManager()
-        self.dataset_path: str = dataset_path
-        self.subjects: List[str] = self._get_subjects(self.dataset_path)
-        self.X: List[torch.Tensor] = []
-        self.y: List[torch.Tensor] = []
+        self._logger: logging.Logger = logging.getLogger(__name__)
+        self._tensor_manager: TensorManager = TensorManager()
+        self._dataset_path: str = dataset_path
+        self._subjects: List[str] = self._get_subjects(self._dataset_path)
+        self._X: List[torch.Tensor] = []
+        self._y: List[torch.Tensor] = []
 
     def _get_subjects(self, records_dir: str) -> List[str]:
         records_path: str = os.path.join(Paths.Directories.DATA, records_dir, Paths.Files.RECORDS)
@@ -27,7 +27,7 @@ class EcgSignalLoader:
             return file.read().strip().split('\n')
 
     def _load_signal(self, records_dir: str, subject: str) -> Tuple[wfdb.Record, List[str], np.ndarray]:
-        self.logger.debug("Loading signal")
+        self._logger.debug("Loading signal")
         record_path: str = os.path.join(Paths.Directories.DATA, records_dir, subject)
         record: wfdb.Record = wfdb.rdrecord(record_path)
         subject_path: str = os.path.join(Paths.Directories.DATA, records_dir, subject)
@@ -54,7 +54,7 @@ class EcgSignalLoader:
         return data, labels
 
     def _create_data_from_subject(self, records_dir: str, subject: str, seconds: int) -> Tuple[List[np.ndarray], List[int]]:
-        self.logger.info(f"Subject: {subject}")
+        self._logger.info(f"Subject: {subject}")
         record: wfdb.Record
         symbols: List[str]
         samples: np.ndarray
@@ -75,52 +75,52 @@ class EcgSignalLoader:
             start_symbol = symbol
             start_sample = sample
         
-        self.logger.debug("Preprocessing signal: resampling, 2 median filters and bandpass filter")
+        self._logger.debug("Preprocessing signal: resampling, 2 median filters and bandpass filter")
         signal: np.ndarray = preprocess_signal(record.p_signal, record.fs)
         rhythm_intervals[start_symbol].append((start_sample, len(signal)))
         rhythm_intervals = { symbol : rhythm_intervals[symbol] for symbol in Tags.CLASSIFICATION_SYMBOLS }
         rhythms: Dict[str, int] = { rhythm_type : sum(list(map(lambda interval: interval[1] - interval[0], intervals))) for rhythm_type, intervals in rhythm_intervals.items() }
 
-        self.logger.info(f"{[(rhythm_type, format_time(rhythm / Time.MINUTES_IN_HOUR / Time.SECONDS_IN_MINUTE / record.fs)) for rhythm_type, rhythm in rhythms.items()]}")
+        self._logger.info(f"{[(rhythm_type, format_time(rhythm / Time.MINUTES_IN_HOUR / Time.SECONDS_IN_MINUTE / record.fs)) for rhythm_type, rhythm in rhythms.items()]}")
         
         chunk_size: int = int(seconds * record.fs)
         return self._split_signal(signal, rhythm_intervals, chunk_size)
 
     def prepare_dataset(self, channels, seconds) -> Tuple[List[torch.Tensor], List[torch.Tensor]]:
         dirname: str = os.path.join(Paths.Directories.DATA, Paths.Directories.DATASETS, f"{seconds}_seconds")
-        self.logger.debug(f"Checking {dirname}")
+        self._logger.debug(f"Checking {dirname}")
 
         if os.path.exists(dirname):
-            self.logger.debug(f"Found directory {dirname} with already created dataset! Now loading it...")
-            self.X = self.tensor_manager.load(os.path.join(dirname, Paths.Files.FEATURES))
-            self.y = self.tensor_manager.load(os.path.join(dirname, Paths.Files.LABELS))
+            self._logger.debug(f"Found directory {dirname} with already created dataset! Now loading it...")
+            self._X = self._tensor_manager.load(os.path.join(dirname, Paths.Files.FEATURES))
+            self._y = self._tensor_manager.load(os.path.join(dirname, Paths.Files.LABELS))
 
             if len(channels) >= 1:
-                for i in range(len(self.X)):
-                    self.X[i] = self.X[i][:, channels, :]
+                for i in range(len(self._X)):
+                    self._X[i] = self._X[i][:, channels, :]
         else:
-            self.logger.debug(f"Creating dataset...")
-            self.logger.debug(f"{len(self.subjects)} subjects to be loaded")
+            self._logger.debug(f"Creating dataset...")
+            self._logger.debug(f"{len(self._subjects)} subjects to be loaded")
             
-            for subject in self.subjects:
-                self.logger.debug(f"Reading subject no. {subject}")
+            for subject in self._subjects:
+                self._logger.debug(f"Reading subject no. {subject}")
 
                 data: List[np.ndarray]
                 labels: List[int]
-                data, labels = self._create_data_from_subject(self.dataset_path, subject, seconds=seconds)
+                data, labels = self._create_data_from_subject(self._dataset_path, subject, seconds=seconds)
 
                 X_subject: torch.Tensor = torch.tensor(np.array(data), dtype=torch.float32).permute(0, 2, 1)
                 y_subject: torch.Tensor = torch.tensor(np.array(labels), dtype=torch.float32).reshape(-1, 1)
-                self.X.append(X_subject)
-                self.y.append(y_subject)
+                self._X.append(X_subject)
+                self._y.append(y_subject)
 
             os.mkdir(dirname)
-            self.logger.debug(f"Saving dataset to {dirname}")
-            self.tensor_manager.save(self.X, os.path.join(dirname, Paths.Files.FEATURES))
-            self.tensor_manager.save(self.y, os.path.join(dirname, Paths.Files.LABELS))
+            self._logger.debug(f"Saving dataset to {dirname}")
+            self._tensor_manager.save(self._X, os.path.join(dirname, Paths.Files.FEATURES))
+            self._tensor_manager.save(self._y, os.path.join(dirname, Paths.Files.LABELS))
 
-            self.logger.info("Dataset ready!")
-            self.logger.info(f"No. of samples: {len(torch.cat(self.y))}")
+            self._logger.info("Dataset ready!")
+            self._logger.info(f"No. of samples: {len(torch.cat(self._y))}")
 
-        return self.X, self.y
+        return self._X, self._y
 

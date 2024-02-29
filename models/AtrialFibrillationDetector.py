@@ -13,25 +13,25 @@ class AtrialFibrillationDetector(torch.nn.Module):
                  transformer_hidden_dimension: int, transformer_heads: int, transformer_encoder_layers: int,
                  use_cnn: bool = False, use_transformer: bool = False) -> None:
         super(AtrialFibrillationDetector, self).__init__()
-        self.logger: logging.Logger = logging.getLogger(__name__)
+        self._logger: logging.Logger = logging.getLogger(__name__)
 
-        self.use_cnn: bool = use_cnn
-        self.use_transformer: bool = use_transformer
-        self.name: str = f"AFD({'CNN,' if self.use_cnn else ''}{'TN,' if self.use_transformer else ''}FFN)"
-        self.logger.info(f"Model {self.name}")
+        self._use_cnn: bool = use_cnn
+        self._use_transformer: bool = use_transformer
+        self._name: str = f"AFD({'CNN,' if self._use_cnn else ''}{'TN,' if self._use_transformer else ''}FFN)"
+        self._logger.info(f"Model {self._name}")
 
-        self.cnn: Cnn = Cnn(ecg_channels, transformer_dimension, window_length) if self.use_cnn else None
-        self.linear: torch.nn.Linear = torch.nn.Linear(window_length, transformer_dimension) if self.use_transformer and not self.use_cnn else None
-        self.transformer: Transformer = Transformer(d_model=transformer_dimension,
+        self._cnn: Cnn = Cnn(ecg_channels, transformer_dimension, window_length) if self._use_cnn else None
+        self._linear: torch.nn.Linear = torch.nn.Linear(window_length, transformer_dimension) if self._use_transformer and not self._use_cnn else None
+        self._transformer: Transformer = Transformer(d_model=transformer_dimension,
                                                     hidden_dimension=transformer_hidden_dimension,
                                                     heads_number=transformer_heads,
-                                                    encoder_layers=transformer_encoder_layers) if self.use_transformer else None
+                                                    encoder_layers=transformer_encoder_layers) if self._use_transformer else None
         
-        ffc_input_dimension: int = transformer_dimension if self.use_cnn or self.use_transformer else window_length
-        self.logger.debug(f"FeedForwardClassifier input dimension = {ffc_input_dimension}")
-        self.ff: FeedForwardClassifier = FeedForwardClassifier(ffc_input_dimension)
+        ffc_input_dimension: int = transformer_dimension if self._use_cnn or self._use_transformer else window_length
+        self._logger.debug(f"FeedForwardClassifier input dimension = {ffc_input_dimension}")
+        self._ff: FeedForwardClassifier = FeedForwardClassifier(ffc_input_dimension)
 
-        self.hyperparameters: Dict[str, float] = {
+        self._hyperparameters: Dict[str, float] = {
             Hyperparameters.Names.TRANSFORMER_DIMENSION        : transformer_dimension,
             Hyperparameters.Names.ECG_CHANNELS                 : ecg_channels,
             Hyperparameters.Names.WINDOW_LENGTH                : window_length,
@@ -40,33 +40,33 @@ class AtrialFibrillationDetector(torch.nn.Module):
             Hyperparameters.Names.TRANSFORMER_ENCODER_LAYERS   : transformer_encoder_layers,
         }
 
-        self.embedded: Optional[torch.Tensor] = None
+        self._embedded: Optional[torch.Tensor] = None
 
     def get_embedded(self) -> Optional[torch.Tensor]:
-        return self.embedded
+        return self._embedded
 
     def get_hyperparameters(self) -> Dict[str, int]:
-        return self.hyperparameters
+        return self._hyperparameters
     
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        self.logger.debug("Starting forward pass!")
-        self.logger.debug(f"Data size: {x.size()}")
+        self._logger.debug("Starting forward pass!")
+        self._logger.debug(f"Data size: {x.size()}")
         # TODO potential refactor - booleans
-        if self.use_cnn:
-            x = self.cnn(x)
-            self.logger.debug("cnn(x) done")
-            self.logger.debug(f"Data size: {x.size()}")
-        if self.use_transformer:
-            if not self.use_cnn:
-                x = self.linear(x)
-                self.logger.debug("linear(x) done")
-                self.logger.debug(f"Data size: {x.size()}")    
-            x = self.transformer(x)
-            self.embedded = x
-            self.logger.debug("transformer(x) done")
-            self.logger.debug(f"Data size: {x.size()}")
-        x = self.ff(x)
-        self.logger.debug("ff(x) done")
-        self.logger.debug(f"Data size: {x.size()}")
+        if self._use_cnn:
+            x = self._cnn(x)
+            self._logger.debug("cnn(x) done")
+            self._logger.debug(f"Data size: {x.size()}")
+        if self._use_transformer:
+            if not self._use_cnn:
+                x = self._linear(x)
+                self._logger.debug("linear(x) done")
+                self._logger.debug(f"Data size: {x.size()}")    
+            x = self._transformer(x)
+            self._embedded = x
+            self._logger.debug("transformer(x) done")
+            self._logger.debug(f"Data size: {x.size()}")
+        x = self._ff(x)
+        self._logger.debug("ff(x) done")
+        self._logger.debug(f"Data size: {x.size()}")
         return x
 
