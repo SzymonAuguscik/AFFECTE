@@ -1,55 +1,39 @@
-from torch.nn import Module, TransformerEncoder, TransformerEncoderLayer, LeakyReLU
-from torch.nn.init import xavier_uniform_
 from constants import Hyperparameters
 
 import logging
-# import torch
-# import math
+import torch
 
 
-class Transformer(Module):
-    def __init__(self, d_model, hidden_dimension, heads_number, encoder_layers):
+class Transformer(torch.nn.Module):
+    def __init__(self, d_model: int, hidden_dimension: int, heads_number: int, encoder_layers: int) -> None:
         super(Transformer, self).__init__()
-        self.logger = logging.getLogger(__name__)
-        self.d_model = d_model
-        # self.positional_encoding = self.create_positional_encoding()
-
-        encoder_layer = encoder_layer=TransformerEncoderLayer(d_model=self.d_model,
-                                                              nhead=heads_number,
-                                                              dim_feedforward=hidden_dimension,
-                                                              activation=LeakyReLU(),
-                                                              batch_first=True,
-                                                              norm_first=True,
-                                                              layer_norm_eps=Hyperparameters.Transformer.LAYER_NORM_EPS)
+        self._logger: logging.Logger = logging.getLogger(__name__)
+        self._d_model: int = d_model
+        encoder_layer: torch.nn.TransformerEncoderLayer = torch.nn.TransformerEncoderLayer(d_model=self._d_model,
+                                                                                           nhead=heads_number,
+                                                                                           dim_feedforward=hidden_dimension,
+                                                                                           activation=torch.nn.LeakyReLU(),
+                                                                                           batch_first=True,
+                                                                                           norm_first=True,
+                                                                                           layer_norm_eps=Hyperparameters.Transformer.LAYER_NORM_EPS)
 
         self._init_weights(encoder_layer.linear1, encoder_layer.linear2)
-        self.transformer = TransformerEncoder(encoder_layer=encoder_layer,
-                                              num_layers=encoder_layers)
+        self._transformer: torch.nn.TransformerEncoder = torch.nn.TransformerEncoder(encoder_layer=encoder_layer,
+                                                                                     num_layers=encoder_layers)
 
-    def _init_weights(self, *layers):
+    def _init_weights(self, *layers: torch.nn.Linear) -> None:
         for layer in layers:
-            xavier_uniform_(layer.weight)
+            torch.nn.init.xavier_uniform_(layer.weight)
             layer.bias.data.fill_(Hyperparameters.INITIAL_BIAS)
-
-    # def create_positional_encoding(self, max_length=5000):
-    #     position = torch.arange(0, max_length).unsqueeze(1)
-    #     div_term = torch.exp(torch.arange(0, self.d_model, 2).float() * -(math.log(10000.0) / self.d_model))
-    #     positional_encoding = torch.zeros(max_length, self.d_model)
-    #     positional_encoding[:, 0::2] = torch.sin(position * div_term)
-    #     positional_encoding[:, 1::2] = torch.cos(position * div_term)
-    #     return positional_encoding.unsqueeze(1)
     
-    def forward(self, x):
-        self.logger.debug(f"Data size: {x.size()}")
-        self.logger.debug("Starting forward pass!")
-        self.logger.debug(f"Data size: {x.size()}")
-        # self.logger.debug(f"Positonal encoding size: {self.positional_encoding.size()}")
-        # self.logger.debug(f"self.positional_encoding[:x.size(0), :] size = {self.positional_encoding[:x.size(0), :].size()}")
-        # x = x + self.positional_encoding[:x.size(0), :]
-        self.logger.debug("positional_encoding(x) done")
-        self.logger.debug(f"Data size: {x.size()}")
-        x = self.transformer.forward(x)
-        self.logger.debug("TransformerEncoder(x) done")
-        self.logger.debug(f"Data size: {x.size()}")
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        self._logger.debug(f"Data size: {x.size()}")
+        self._logger.debug("Starting forward pass!")
+        self._logger.debug(f"Data size: {x.size()}")
+        self._logger.debug("positional_encoding(x) done")
+        self._logger.debug(f"Data size: {x.size()}")
+        x = self._transformer.forward(x)
+        self._logger.debug("TransformerEncoder(x) done")
+        self._logger.debug(f"Data size: {x.size()}")
         return x
 
