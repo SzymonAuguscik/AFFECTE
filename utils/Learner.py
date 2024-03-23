@@ -15,20 +15,161 @@ import os
 warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
 
 
+#TODO move to separate file
 class LinkConstraintsLoss(torch.nn.Module):
+    """
+    LinkConstraintsLoss is used as a regularization method. It relies on creating links between vectors/embeddings
+    from the same class.
+
+    Attributes
+    ----------
+    _device : torch.device
+        The device to perform calculation on.
+
+    Examples
+    --------
+    model_loss = torch.nn.BCELoss()
+    lc_loss = LinkConstraintsLoss("gpu")
+    model = ConvolutionalNeuralNetwork() # exemplary torch.nn.Module
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+
+    loss = 0
+    for X, y in zip(features, labels):
+        pred = model(X)
+        loss += model_loss(pred, y)
+        loss += lc_loss(X, y)
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+    See also
+    --------
+    https://bmcmedinformdecismak.biomedcentral.com/articles/10.1186/s12911-021-01546-2
+
+    """
     def __init__(self, device: torch.device) -> None:
+        """
+        Initiate LinkConstraintsLoss with calculation device.
+
+        Parameters
+        ----------
+        device : torch.device
+            The device to perform calculation on.
+
+        """
         super(LinkConstraintsLoss, self).__init__()
         self._device: torch.device = device
 
     def forward(self, beta: torch.Tensor, e: np.ndarray) -> float:
+        """
+        Perform forward pass of the data.
+
+        Parameters
+        ----------
+        beta : torch.Tensor
+            The input data to be propagated.
+        e : np.ndarray
+            Link coefficients to be used for link constraints.
+
+        Returns
+        -------
+        loss : float
+            The link constraints loss.
+
+        """
         i: torch.Tensor = torch.arange(beta.size(0)).reshape(-1, 1).to(self._device)
         j: torch.Tensor = torch.arange(beta.size(0)).to(self._device)
         loss: float = 0.5 * torch.norm(beta[i, 0] - e[i, j] * beta[j, 0], p=2)
         return loss
 
 class Learner:
+    """
+    Learner is a wrapper for training and testing model. It provides the trainable model with the typical learning hyperparameters (like batch size
+    or learning rate). Besides training and testing purposes, it enables to measure the time of the training or store, save and visualize training/test results.
+
+    Parameters
+    ----------
+    _device : torch.device
+        The device to perform calculation on.
+    _model : torch.nn.Module
+        The model to be trained and tested.
+    _X_train : torch.Tensor
+        The features for the training.
+    _y_train : torch.Tensor
+        The labels for the training.
+    _X_test : torch.Tensor
+        The features for the testing.
+    _y_test : torch.Tensor
+        The labels for the testing.
+    _seconds : int
+        Used for the saving results purposes.
+    _lr : float
+        The learning rate used during the training.
+    _batch_size : int
+        The batch size of the data during the training.
+    _entropy_loss : torch.nn.Module
+        The entropy loss for the classification purposes.
+    _lc_loss : torch.nn.Module
+        The link constraints loss for the regularization purposes.
+    _optimizer : torch.optim.Optimizer
+        The optimizer determining the model learning method.
+    _epochs : int
+        The number of the epochs. In other words, the training duration.
+    _visualizer : Visualizer
+        The visualizer tool for plotting learning curves and train loss.
+    _timer : Timer
+        The timer used for the training time measurements.
+    _logger : logging.Logger
+        Used for logging purposes.
+    _results : List[Dict[str, float]]
+        The results of the model, gathered after testing it.
+    _hyperparameters : Dict[str, float]
+        All hyperparameters of the Learner: model's hyperparameters and seconds, batch size, learning rate, and epochs.
+
+    Examples
+    --------
+    loader = EcgSignalLoader("/path/to/data")
+    seconds = 10
+    Xs, ys = loader.prepare_dataset(channels=[0, 2, 3], seconds=seconds)
+    k = 10
+    cv = CrossValidator(X=Xs, y=ys, k=k)
+    for step, fold in enumerate(cv):
+        model = MyCustomModel() # exemplary torch.nn.Module
+        X_train, y_train, X_test, y_test = cv.prepare_fold(fold)
+        learner = Learner(model=model, X_train=X_train, y_train=y_train, X_test=X_test, y_test=y_test,
+                          seconds=seconds, lr=0.001, batch_size=128, epochs=150)
+        learner.train()
+        learner.test(X_test, y_test)
+        learner.save_results(step)
+
+    """
     def __init__(self, model: torch.nn.Module, X_train: torch.Tensor, y_train: torch.Tensor, X_test: torch.Tensor, y_test: torch.Tensor,
                  seconds: int, lr: float, batch_size: int, epochs: int) -> None:
+        """
+        Initiate Learner with given model and data (features and labels for training/test) and common learning hyperparameters.
+
+        Parameters
+        ----------
+        model : torch.nn.Module
+            The model to be trained and tested.
+        X_train : torch.Tensor
+            The features for the training.
+        y_train : torch.Tensor
+            The labels for the training.
+        X_test : torch.Tensor
+            The features for the testing.
+        y_test : torch.Tensor
+            The labels for the testing.
+        seconds : int
+            Used for the saving results purposes.
+        lr : float
+            The learning rate used during the training.
+        batch_size : int
+            The batch size of the data during the training.
+        epochs : int
+            The number of the epochs. In other words, the training duration.
+
+        """
         self._device: torch.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self._model: torch.nn.Module = model.to(self._device)
         self._X_train: torch.Tensor = X_train.to(self._device)
@@ -57,6 +198,20 @@ class Learner:
         self._logger.debug(f"Params: {sum(param.numel() for param in model.parameters())}")
 
     def _make_predictions(self, X: torch.Tensor) -> np.ndarray:
+        """
+        Make predictions for given features. For efficiency, predictions are made in batches.
+
+        Parameters
+        ----------
+        X : torch.Tensor
+            Features to be used by _model for predictions.
+
+        Returns
+        -------
+        y_pred : np.ndarray
+            Predictions returned by _model.
+
+        """
         test_data_loader: torch.utils.data.DataLoader = torch.utils.data.DataLoader(X, batch_size=self._batch_size)
         y_pred: np.ndarray = np.array([])
 
@@ -67,6 +222,20 @@ class Learner:
         return y_pred
 
     def _get_link_coefficients(self, y_batch: torch.Tensor) -> torch.Tensor:
+        """
+        Create link coefficients based on label vectors. If vectors are from the same class, the link between them should be made
+        (link coefficient is 1). Otherwise, no link is created (link coefficient is 0).
+
+        Parameters
+        ----------
+        y_batch : torch.Tensor
+            The labels which the link coefficients should be retrieved from.
+
+        Returns
+        -------
+        coefficients : torch.Tensor
+            The coefficients indicating whether there are links between vectors.
+        """
         size: int = y_batch.size(0)
         coefficients: torch.Tensor = torch.zeros(size, size).to(self._device)
 
@@ -79,12 +248,30 @@ class Learner:
         return coefficients
 
     def _build_dirname(self) -> str:
+        """
+        Create a result directory name based on the model name, hyperparameters names and their values.
+        It is used for saving results and plots.
+
+        Returns
+        -------
+        str
+            The path to the result directory.
+        """
         dirname: str = reduce(lambda directory_name, parameter: f"{directory_name}_{parameter[0]}{parameter[1]}",
                               self._hyperparameters.items(),
                               self._model.name)
         return os.path.join(Paths.Directories.RESULTS, dirname)
 
     def _save_metrics(self, file: TextIO) -> None:
+        """
+        Save metrics to the specified file. There are 4 metrics saved: accuracy, F1 score, precision, and recall.
+
+        Parameters
+        ----------
+        file : TextIO
+            The file that the results will be saved to.
+
+        """
         self._logger.debug(f"Saving metrics to {file}")
         file.write(f"{Results.Metrics.ACCURACY},{Results.Metrics.F1_SCORE},{Results.Metrics.PRECISION},{Results.Metrics.RECALL}\n")
 
@@ -95,30 +282,67 @@ class Learner:
                        f"{result[Results.Metrics.RECALL]}\n")
 
     def _save_training_time(self, file: TextIO) -> None:
+        """
+        Save training time to the specified file. The time is rounded to the seconds.
+
+        Parameters
+        ----------
+        file : TextIO
+            The file that the time will be saved to.
+
+        """
         self._logger.debug(f"Saving training time to {file}")
         file.write(f"{round(self._timer.get_time())}s\n")
 
     def _save_device_name(self, file: TextIO) -> None:
+        """
+        Save device name to the specified file.
+
+        Parameters
+        ----------
+        file : TextIO
+            The file that the device name will be saved to.
+
+        """
         self._logger.debug(f"Saving device name to {file}")
         file.write(f"{self._device}\n")
 
     def _plot_metrics(self, dirname: str) -> None:
+        """
+        Plot metrics gathered throughout the training and save the plots into specified directory.
+        The plotted metrics are: training loss and training/test accuracy, F1 score, precision, and recall.
+
+        Parameters
+        ----------
+        dirname : str
+            The path to the directory where plots should be saved to.
+
+        """
         self._logger.debug("Creating plots...")
         self._visualizer.plot_train_loss(os.path.join(dirname, Results.Visualization.Files.LOSS))
         self._visualizer.plot_learning_curves(os.path.join(dirname, Results.Visualization.Files.ACCURACY),\
-                                             Results.Metrics.TRAIN_ACCURACY,\
-                                             Results.Metrics.TEST_ACCURACY)
+                                              Results.Metrics.TRAIN_ACCURACY,\
+                                              Results.Metrics.TEST_ACCURACY)
         self._visualizer.plot_learning_curves(os.path.join(dirname, Results.Visualization.Files.F1_SCORE),\
-                                             Results.Metrics.TRAIN_F1_SCORE,\
-                                             Results.Metrics.TEST_F1_SCORE)
+                                              Results.Metrics.TRAIN_F1_SCORE,\
+                                              Results.Metrics.TEST_F1_SCORE)
         self._visualizer.plot_learning_curves(os.path.join(dirname, Results.Visualization.Files.PRECISION),\
-                                             Results.Metrics.TRAIN_PRECISION,\
-                                             Results.Metrics.TEST_PRECISION)
+                                              Results.Metrics.TRAIN_PRECISION,\
+                                              Results.Metrics.TEST_PRECISION)
         self._visualizer.plot_learning_curves(os.path.join(dirname, Results.Visualization.Files.RECALL),\
-                                             Results.Metrics.TRAIN_RECALL,\
-                                             Results.Metrics.TEST_RECALL)
+                                              Results.Metrics.TRAIN_RECALL,\
+                                              Results.Metrics.TEST_RECALL)
 
     def train(self) -> None:
+        """
+        Train _model. The data is split into batches, then the model is repeatedly fed with those batches.
+        During the training part, for each epoch, the loss is calculated. Its value depends on the embedded attribute of a model
+        (which is not None when model contains Transformer). When it is available, both entropy loss and link constraint loss are taken into account.
+        Otherwise, link constraint one is skipped. For every batch the gradients are calculated based on the loss which are then used by optimizer.
+        During the evaluation part, the model makes predictions and is evaluated with 4 metrics: F1 score, accuracy, precision, and recall
+        referring to the training and test features/labels separately. The visualizer saves those metrics for further plotting purposes.
+
+        """
         self._logger.info("Training model...")
         self._logger.debug(f"Using {self._device} device")
         self._logger.debug("Starting timer...")
@@ -191,6 +415,18 @@ class Learner:
         self._logger.debug(f"Training time was {training_time}s")
 
     def test(self, X: torch.Tensor, y: torch.Tensor) -> None:
+        """
+        Test model with given features and expected labels. After setting model into evaluation mode, the model makes predictions
+        which are then evaluated with 4 metrics: F1 score, accuracy, precision, and recall. Those results are then stored.
+
+        Parameters
+        ----------
+        X : torch.Tensor
+            The features which model will make predictions from.
+        y : torch.Tensor
+            The expected labels.
+
+        """
         X = X.to(self._device)
         y = y.to(self._device)
         self._logger.info("Testing model...")
@@ -219,7 +455,17 @@ class Learner:
         }
         self._results.append(results)
 
-    def save_results(self, fold: str) -> None:
+    def save_results(self, fold: int) -> None:
+        """
+        Save results for the specified cross validation fold. Saved results are: metrics, training time and device name.
+        It also creates necessary directories if needed.
+
+        Parameters
+        ----------
+        fold : int
+            The fold number which results are referring to. It also indicates the directory to save results.
+
+        """
         self._logger.debug("Saving results...")
         if not os.path.exists(Paths.Directories.RESULTS):
             os.mkdir(Paths.Directories.RESULTS)

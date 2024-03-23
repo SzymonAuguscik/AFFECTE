@@ -88,5 +88,5 @@ if __name__ == "__main__":
     learner.train()
     learner.test(X_train, y_train)
     learner.test(X_test, y_test)
-    learner.save_results(fold=str(validation_step))
+    learner.save_results(fold=validation_step)
 
