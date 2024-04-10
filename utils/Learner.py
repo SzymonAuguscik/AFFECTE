@@ -1,4 +1,4 @@
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 from sklearn.exceptions import UndefinedMetricWarning
 from constants import Results, Paths, Hyperparameters
 from typing import Dict, List, TextIO, Optional
@@ -262,9 +262,31 @@ class Learner:
                               self._model.name)
         return os.path.join(Paths.Directories.RESULTS, dirname)
 
+    def _save_selected_metrics(self, file: TextIO, *metrics: str) -> None:
+        """
+        Save selected metrics to the specified file.
+
+        Parameters
+        ----------
+        file : TextIO
+            The file that the results will be saved to.
+        *metrics : str
+            The metrics to be saved.
+
+        """
+        self._logger.debug(f"Metrics to be saved: {metrics}")
+        header: str = ",".join(metrics) + '\n'
+        file.write(header)
+
+        for result in self._results:
+            metrics_row: str = reduce(lambda metric1, metric2: f"{metric1},{metric2}",
+                               map(lambda metric: result[metric], metrics)) \
+                               + '\n'
+            file.write(metrics_row)
+
     def _save_metrics(self, file: TextIO) -> None:
         """
-        Save metrics to the specified file. There are 4 metrics saved: accuracy, F1 score, precision, and recall.
+        Save metrics to the specified file. There are 8 metrics saved: TN, FP, FN, TP, accuracy, F1 score, precision, and recall.
 
         Parameters
         ----------
@@ -273,13 +295,8 @@ class Learner:
 
         """
         self._logger.debug(f"Saving metrics to {file}")
-        file.write(f"{Results.Metrics.ACCURACY},{Results.Metrics.F1_SCORE},{Results.Metrics.PRECISION},{Results.Metrics.RECALL}\n")
-
-        for result in self._results:
-            file.write(f"{result[Results.Metrics.ACCURACY]},"
-                       f"{result[Results.Metrics.F1_SCORE]},"
-                       f"{result[Results.Metrics.PRECISION]},"
-                       f"{result[Results.Metrics.RECALL]}\n")
+        self._save_selected_metrics(file, Results.Metrics.TN, Results.Metrics.FP, Results.Metrics.FN, Results.Metrics.TP)
+        self._save_selected_metrics(file, Results.Metrics.ACCURACY, Results.Metrics.F1_SCORE, Results.Metrics.PRECISION, Results.Metrics.RECALL)
 
     def _save_training_time(self, file: TextIO) -> None:
         """
@@ -417,7 +434,7 @@ class Learner:
     def test(self, X: torch.Tensor, y: torch.Tensor) -> None:
         """
         Test model with given features and expected labels. After setting model into evaluation mode, the model makes predictions
-        which are then evaluated with 4 metrics: F1 score, accuracy, precision, and recall. Those results are then stored.
+        which are then evaluated with 8 metrics: TN, FP, FN, TP, F1 score, accuracy, precision, and recall. Those results are then stored.
 
         Parameters
         ----------
@@ -437,17 +454,31 @@ class Learner:
         self._logger.info(f"{int(sum(y)[0])}/{y.shape[0]} samples from test set are AF")
         self._logger.info(f"{int(sum(y_pred)[0])}/{y_pred.shape[0]} samples marked as AF")
 
+        tn: int
+        fp: int
+        fn: int
+        tp: int
+        tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+
         accuracy: float = accuracy_score(y_true, y_pred)
         f1_metric: float = f1_score(y_true, y_pred)
         precision: float = precision_score(y_true, y_pred)
         recall: float = recall_score(y_true, y_pred)
 
+        self._logger.debug(f"TN: {tn}")
+        self._logger.debug(f"FP: {fp}")
+        self._logger.debug(f"FN: {fn}")
+        self._logger.debug(f"TP: {tp}")
         self._logger.debug(f"Accuracy: {accuracy}")
         self._logger.debug(f"F1 score: {f1_metric}")
         self._logger.debug(f"Precision: {precision}")
         self._logger.debug(f"Recall: {recall}")
 
         results: Dict[str, float] = {
+            Results.Metrics.TN        : tn,
+            Results.Metrics.FP        : fp,
+            Results.Metrics.FN        : fn,
+            Results.Metrics.TP        : tp,
             Results.Metrics.ACCURACY  : accuracy,
             Results.Metrics.F1_SCORE  : f1_metric,
             Results.Metrics.PRECISION : precision,
