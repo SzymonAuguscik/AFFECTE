@@ -32,6 +32,11 @@ class Results:
         RECALL = "Czułość"
         LOSS = "Funkcja straty"
 
+        TN = "TN"
+        FP = "FP"
+        FN = "FN"
+        TP = "TP"
+
         TRAIN = "trening"
         TEST = "test"
 
