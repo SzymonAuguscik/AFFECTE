@@ -399,20 +399,20 @@ class Learner:
             train_precision: float = precision_score(y_train_true, y_train_pred)
             train_recall: float = recall_score(y_train_true, y_train_pred)
 
-            self._logger.debug(f"Accuracy score = {train_accuracy}")
+            self._logger.info(f"Accuracy score = {train_accuracy}")
             self._logger.debug(f"F1 score = {train_f1_score}")
             self._logger.debug(f"Precision score = {train_precision}")
-            self._logger.info(f"Recall score = {train_recall}")
+            self._logger.debug(f"Recall score = {train_recall}")
 
             test_accuracy: float = accuracy_score(y_test_true, y_test_pred)
             test_f1_score: float = f1_score(y_test_true, y_test_pred)
             test_precision: float = precision_score(y_test_true, y_test_pred)
             test_recall: float = recall_score(y_test_true, y_test_pred)
 
-            self._logger.debug(f"Accuracy score = {test_accuracy}")
+            self._logger.info(f"Accuracy score = {test_accuracy}")
             self._logger.debug(f"F1 score = {test_f1_score}")
             self._logger.debug(f"Precision score = {test_precision}")
-            self._logger.info(f"Recall score = {test_recall}")
+            self._logger.debug(f"Recall score = {test_recall}")
             
             self._visualizer.update_metric(Results.Metrics.LOSS, loss.item())
 
