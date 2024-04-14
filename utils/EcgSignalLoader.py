@@ -250,9 +250,9 @@ class EcgSignalLoader:
             self._logger.info("Dataset ready!")
             self._logger.info(f"No. of samples: {len(torch.cat(self._y))}")
 
-            if len(channels) >= 1:
-                for i in range(len(self._X)):
-                    self._X[i] = self._X[i][:, channels, :]
+        if len(channels) >= 1:
+            for i in range(len(self._X)):
+                self._X[i] = self._X[i][:, channels, :]
 
         return self._X, self._y
 
