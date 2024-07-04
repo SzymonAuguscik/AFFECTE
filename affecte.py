@@ -7,6 +7,7 @@ from models.AtrialFibrillationDetector import AtrialFibrillationDetector
 from utils.CrossValidator import CrossValidator
 from utils.Learner import Learner
 # from pyhrv.tools import plot_ecg
+from utils.EcgSignalAugmenter import EcgSignalAugmenter
 from utils.EcgSignalLoader import EcgSignalLoader
 from typing import List
 from constants import Paths
@@ -56,6 +57,10 @@ if __name__ == "__main__":
     y: List[torch.Tensor]
     X, y = ecg_signal_loader.prepare_dataset(channels=channels, seconds=seconds)
 
+    if len(channels) > 1:
+        ecg_signal_augmenter: EcgSignalAugmenter = EcgSignalAugmenter(X, Paths.Files.AUGMENTATION_CONFIG)
+        X = ecg_signal_augmenter.augment()
+
     validation_step: int = args.validation_step
     cross_validator: CrossValidator = CrossValidator(X=X, y=y, dataset_custom_size=args.dataset_custom_size)
     X_train: torch.Tensor
@@ -66,10 +71,11 @@ if __name__ == "__main__":
     logger.info(f"Cross validation fold #{validation_step + 1}")
 
     logger.info(f"Number of training examples: {len(X_train)}")
+    logger.info(f"Number of training examples: {X_train[0].size()}")
     logger.info(f"Number of test examples: {len(X_test)}")
     logger.info(f"Arrhythmia fraction = {(sum(y_train) + sum(y_test)) / (len(y_train) + len(y_test))}")
     
-    learner: Learner = Learner(model=AtrialFibrillationDetector(ecg_channels=len(channels),
+    learner: Learner = Learner(model=AtrialFibrillationDetector(ecg_channels=X_train[0].size(0),
                                                                 window_length=X_train[0].size(1),
                                                                 transformer_dimension=args.transformer_dimension,
                                                                 transformer_hidden_dimension=args.transformer_hidden_dimension,
