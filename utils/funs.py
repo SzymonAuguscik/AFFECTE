@@ -5,6 +5,7 @@ import numpy as np
 
 import scipy.signal
 import logging
+import torch
 import wfdb
 import sys
 
@@ -122,4 +123,24 @@ def init_logger(name: str = None) -> logging.Logger:
     logger.setLevel(logging.INFO)
     logger.addHandler(handler)
     return logger
+
+def add(ecg_signal: torch.Tensor, channel_1: int, channel_2: int) -> torch.Tensor:
+    """
+    Add two ECG channels.
+
+    Parameters
+    ----------
+    ecg_signal : torch.Tensor
+        Source ECG signal of N x C x V size (N - samples number, C - channels, V - values).
+    channel_1 : int
+        First summand channel (N x 1 x V size).
+    channel_2 : int
+        Second summand channel (N x 1 x V size).
+
+    Returns
+    -------
+        New ECG signal channel (N x 1 x V size).
+
+    """
+    return (ecg_signal[:,channel_1,:] + ecg_signal[:,channel_2,:]).unsqueeze(1)
 

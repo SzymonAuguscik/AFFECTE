@@ -23,6 +23,7 @@ class Paths:
         FEATURES = "features.pt"
         LABELS = "labels.pt"
         RESULTS = "results.txt"
+        AUGMENTATION_CONFIG = "augmentation_steps.txt"
 
 class Results:
     class Metrics:
