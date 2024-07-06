@@ -42,7 +42,7 @@ class Transformer(torch.nn.Module):
         hidden_dimension : int
             The dimension of feed forward networks in encoder layers.
         heads_number : int
-            The number of heads for multi-head attention.
+            The number of heads for multi-head attention per one encoder.
         encoder_layers : int
             The number of encoder layers in Transformer encoder.
 

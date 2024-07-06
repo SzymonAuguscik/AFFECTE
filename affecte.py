@@ -2,7 +2,7 @@
 AFFECTE - Atrial Fibrillation Finder from Electrocardiogram with Convolution and Transformer Encoder
 """
 
-from utils.funs import init_logger
+from utils.Utils import init_logger
 from models.AtrialFibrillationDetector import AtrialFibrillationDetector
 from utils.CrossValidator import CrossValidator
 from utils.Learner import Learner
@@ -37,7 +37,7 @@ if __name__ == "__main__":
     parser.add_argument("-b", "--batch_size", default=128, choices=range(1, 2049), metavar="[1-2048]", type=int, help="the data samples used per epoch")
     parser.add_argument("-t", "--transformer_dimension", default=128, choices=range(1, 2049), metavar="[1-2048]", type=int, help="d_model for Transformer")
     parser.add_argument("-f", "--transformer_hidden_dimension", default=256, choices=range(1, 2049), metavar="[1-2048]", type=int, help="dimension of feed forward layers in Transformer")
-    parser.add_argument("-a", "--transformer_heads", default=16, choices=range(1, 129), metavar="[1-128]", type=int, help="number of attention heads in Transformer")
+    parser.add_argument("-a", "--transformer_heads", default=16, choices=range(1, 129), metavar="[1-128]", type=int, help="number of attention heads per encoder in Transformer")
     parser.add_argument("-n", "--transformer_encoder_layers", default=8, choices=range(1, 65), metavar="[1-64]", type=int, help="number of encoding layers in Transformer")
     parser.add_argument("-d", "--dataset_custom_size", choices=range(1, 1_000_001), metavar="[1-1000000]", type=int, help="set how many samples should be used from dataset; use all samples if not set")
     parser.add_argument("-v", "--validation_step", default=0, choices=range(0, 5), metavar="[0-4]", type=int, help="choose which cross validation fold should be used as test set")
