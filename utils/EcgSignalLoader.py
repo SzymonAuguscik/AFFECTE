@@ -1,4 +1,4 @@
-from utils.funs import preprocess_signal, format_time
+from utils.Utils import preprocess_signal, format_time
 from typing import List, Tuple, Optional, Dict
 from utils.TensorManager import TensorManager
 from constants import Tags, Time, Paths

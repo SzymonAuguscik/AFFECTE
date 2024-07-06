@@ -1,4 +1,4 @@
-from utils.funs import add
+from utils.Utils import add
 from typing import List, Callable
 from enum import Enum
 
