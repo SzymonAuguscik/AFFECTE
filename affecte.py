@@ -71,7 +71,6 @@ if __name__ == "__main__":
     logger.info(f"Cross validation fold #{validation_step + 1}")
 
     logger.info(f"Number of training examples: {len(X_train)}")
-    logger.info(f"Number of training examples: {X_train[0].size()}")
     logger.info(f"Number of test examples: {len(X_test)}")
     logger.info(f"Arrhythmia fraction = {(sum(y_train) + sum(y_test)) / (len(y_train) + len(y_test))}")
     
