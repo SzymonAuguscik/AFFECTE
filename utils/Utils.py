@@ -27,8 +27,8 @@ def format_time(time_fraction: float) -> str:
     """
     hours: int = floor(time_fraction)
     precise_minutes: float = (time_fraction - hours) * Time.MINUTES_IN_HOUR
-    minutes: int = floor(minutes)
-    seconds: int = int((minutes - precise_minutes) * Time.SECONDS_IN_MINUTE)
+    minutes: int = floor(precise_minutes)
+    seconds: int = int((precise_minutes - minutes) * Time.SECONDS_IN_MINUTE)
     return f"{hours}:{minutes}:{seconds}"
 
 def bandpass_filter(signal: np.ndarray) -> np.ndarray:

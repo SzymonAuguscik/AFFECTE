@@ -31,6 +31,10 @@ class EcgSignalLoader:
         List of features per subject (ECG signal values).
     _y : List[torch.Tensor]
         List of labels per subject (arrhythmia annotations).
+    #TODO change to enum "Mode"
+    _af_sr_split : bool
+        Determine if dataset should be split by AF and SR
+        or AF and non-AF annotations.
 
     Examples
     --------
@@ -42,14 +46,17 @@ class EcgSignalLoader:
         y = y.int()
 
     """
-    def __init__(self, data_path: str) -> None:
+    def __init__(self, data_path: str, af_sr_split: bool = False) -> None:
         """
         Initiate EcgSignalLoader with all subjects for _subjects and default values for other attributes.
 
         Parameters
         ----------
-        _data_path : str
+        data_path : str
             Path to read raw data from.
+        af_sr_split : bool, optional
+            Determine if dataset should be split by AF and SR
+            or AF and non-AF annotations.
 
         """
         self._logger: logging.Logger = logging.getLogger(__name__)
@@ -58,6 +65,7 @@ class EcgSignalLoader:
         self._subjects: List[str] = self._get_subjects(self._data_path)
         self._X: List[torch.Tensor] = []
         self._y: List[torch.Tensor] = []
+        self._af_sr_split: bool = af_sr_split
 
     def _get_subjects(self, records_dir: str) -> List[str]:
         """
@@ -107,6 +115,46 @@ class EcgSignalLoader:
         symbols: List[str] = annotation.aux_note              
         samples: np.ndarray = annotation.sample
         return record, symbols, samples
+
+    def _split_signal_by_af_and_sr(self, signal: np.ndarray, rhythm_intervals: Dict[str, List[Tuple[int, int]]], chunk_size: int) -> Tuple[List[np.ndarray], List[int]]:
+        """
+        Split singal into atrial fibrillation and sinus rhythm chunks.
+
+        Parameters
+        ----------
+        signal : np.ndarray
+            An ECG signal that will be split.
+        rhythm_intervals : Dict[str, List[Tuple[int, int]]]
+            A dictionary that each key is an annotation and each value is an interval indicating
+            the start and the end point of a rhythm type.
+        chunk_size : int
+            The size of a single chunk.
+
+        Returns
+        -------
+        chunks : List[np.ndarray]
+            List of prepared chunks.
+        labels : List[int]
+            Labels for chunks (1 if atrial fibrillation, 0 if sinus rhythm).
+
+        """
+        chunks: List[np.ndarray] = []
+        labels: List[int] = []
+
+        for rhythm_type, intervals in rhythm_intervals.items():
+            is_af: bool = rhythm_type == Tags.AF_SYMBOL
+            is_sr: bool = rhythm_type == Tags.SR_SYMBOL
+
+            for interval in intervals:
+                for idx in range(interval[0], interval[1], chunk_size):
+                    chunk: np.ndarray = signal[idx : idx + chunk_size]
+                    
+                    if len(chunk) == chunk_size:
+                        if is_af or is_sr:
+                            chunks.append(chunk)
+                            labels.append(int(is_af))
+
+        return chunks, labels        
 
     def _split_signal_by_af(self, signal: np.ndarray, rhythm_intervals: Dict[str, List[Tuple[int, int]]], chunk_size: int) -> Tuple[List[np.ndarray], List[int]]:
         """
@@ -163,7 +211,7 @@ class EcgSignalLoader:
         Returns
         -------
         Tuple[List[np.ndarray], List[int]]
-            See _split_signal_by_af().
+            See _split_signal_by_af() or _split_signal_by_af_and_sr().
 
         """
         self._logger.info(f"Subject: {subject}")
@@ -196,7 +244,8 @@ class EcgSignalLoader:
         self._logger.info(f"{[(rhythm_type, format_time(rhythm / Time.MINUTES_IN_HOUR / Time.SECONDS_IN_MINUTE / record.fs)) for rhythm_type, rhythm in rhythms.items()]}")
         
         chunk_size: int = int(seconds * record.fs)
-        return self._split_signal_by_af(signal, rhythm_intervals, chunk_size)
+        return self._split_signal_by_af_and_sr(signal, rhythm_intervals, chunk_size) if self._af_sr_split else \
+               self._split_signal_by_af(signal, rhythm_intervals, chunk_size)
 
     def prepare_dataset(self, channels: List[int], seconds: int) -> Tuple[List[torch.Tensor], List[torch.Tensor]]:
         """
@@ -219,7 +268,8 @@ class EcgSignalLoader:
             List of labels per subject (arrhythmia annotations).
 
         """
-        dirname: str = os.path.join(Paths.Directories.DATA, Paths.Directories.DATASETS, f"{seconds}_seconds")
+        split_kind: str = "AF_SR" if self._af_sr_split else "AF_nonAF"
+        dirname: str = os.path.join(Paths.Directories.DATA, Paths.Directories.DATASETS, f"{seconds}_seconds_{split_kind}")
         self._logger.debug(f"Checking {dirname}")
 
         if os.path.exists(dirname):
