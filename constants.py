@@ -1,14 +1,15 @@
 class Tags:
     SYMBOLS_TO_IGNORE = ('', '\x01 Aux', 'MISSB', 'PSE', 'MB', 'M')
     AF_SYMBOL = '(AFIB'
-    CLASSIFICATION_SYMBOLS = [ '(N', AF_SYMBOL]
+    SR_SYMBOL = '(N'
+    CLASSIFICATION_SYMBOLS = [ SR_SYMBOL, AF_SYMBOL]
     ARRHYTHMIA_SYMBOLS = [ *CLASSIFICATION_SYMBOLS, '(SVTA', '(VT', '(B', '(T', '(IVR', '(AB', '(SBR' ]
 
     NOTES_TO_ANNOTATIONS = {
-        '(AFIB' : 'A',
-        '(AFL'  : 'A',
-        '(J'    : 'J',
-        '(N'    : 'N'
+        AF_SYMBOL : 'A',
+        '(AFL'    : 'A',
+        '(J'      : 'J',
+        SR_SYMBOL : 'N'
     }
 
 class Paths:

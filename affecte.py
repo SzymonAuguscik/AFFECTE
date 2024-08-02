@@ -52,12 +52,12 @@ if __name__ == "__main__":
     seconds: int = args.seconds
     logger.debug(f"Data will be split into {seconds} seconds intervals")
 
-    ecg_signal_loader: EcgSignalLoader = EcgSignalLoader(Paths.Directories.LONG_TERM_AF)
+    ecg_signal_loader: EcgSignalLoader = EcgSignalLoader(Paths.Directories.LONG_TERM_AF, af_sr_split=True)
     X: List[torch.Tensor]
     y: List[torch.Tensor]
     X, y = ecg_signal_loader.prepare_dataset(channels=channels, seconds=seconds)
 
-    if len(channels) > 1:
+    if len(channels) > 2:
         ecg_signal_augmenter: EcgSignalAugmenter = EcgSignalAugmenter(X, Paths.Files.AUGMENTATION_CONFIG)
         X = ecg_signal_augmenter.augment()
 
