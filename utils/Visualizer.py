@@ -97,6 +97,7 @@ class Visualizer:
         plt.title(Results.Visualization.Names.LR_TITLE)
         plt.xlabel(Results.Visualization.Names.X_LABEL)
         plt.ylabel(Results.Visualization.Names.LR_Y_LABEL)
+        plt.ylim(0, 1)
         for metric in metrics:
             plt.plot(range(0, len(self._metrics[metric])), self._metrics[metric])
         plt.legend(metrics)
