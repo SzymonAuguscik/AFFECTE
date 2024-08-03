@@ -52,7 +52,7 @@ if __name__ == "__main__":
     seconds: int = args.seconds
     logger.debug(f"Data will be split into {seconds} seconds intervals")
 
-    ecg_signal_loader: EcgSignalLoader = EcgSignalLoader(Paths.Directories.LONG_TERM_AF, af_sr_split=True)
+    ecg_signal_loader: EcgSignalLoader = EcgSignalLoader(Paths.Directories.LONG_TERM_AF)
     X: List[torch.Tensor]
     y: List[torch.Tensor]
     X, y = ecg_signal_loader.prepare_dataset(channels=channels, seconds=seconds)
