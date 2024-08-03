@@ -37,15 +37,17 @@ class Visualizer:
         self._logger: logging.Logger = logging.getLogger(__name__)
         # TODO consider removing default metrics and adding custom ones by user
         self._metrics: Dict[str, List[float]] = {
-            Results.Metrics.LOSS            : [],
-            Results.Metrics.TRAIN_ACCURACY  : [],
-            Results.Metrics.TRAIN_F1_SCORE  : [],
-            Results.Metrics.TRAIN_PRECISION : [],
-            Results.Metrics.TRAIN_RECALL    : [],
-            Results.Metrics.TEST_ACCURACY   : [],
-            Results.Metrics.TEST_F1_SCORE   : [],
-            Results.Metrics.TEST_PRECISION  : [],
-            Results.Metrics.TEST_RECALL     : [],
+            Results.Metrics.LOSS              : [],
+            Results.Metrics.TRAIN_ACCURACY    : [],
+            Results.Metrics.TRAIN_F1_SCORE    : [],
+            Results.Metrics.TRAIN_PRECISION   : [],
+            Results.Metrics.TRAIN_RECALL      : [],
+            Results.Metrics.TRAIN_SPECIFICITY : [],
+            Results.Metrics.TEST_ACCURACY     : [],
+            Results.Metrics.TEST_F1_SCORE     : [],
+            Results.Metrics.TEST_PRECISION    : [],
+            Results.Metrics.TEST_RECALL       : [],
+            Results.Metrics.TEST_SPECIFICITY  : [],
         }
 
     def update_metric(self, metric: str, value: float) -> None:

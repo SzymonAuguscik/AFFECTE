@@ -32,6 +32,7 @@ class Results:
         F1_SCORE = "Miara F1"
         PRECISION = "Precyzja"
         RECALL = "Czułość"
+        SPECIFICITY = "Swoistość"
         LOSS = "Funkcja straty"
 
         TN = "TN"
@@ -46,11 +47,13 @@ class Results:
         TRAIN_F1_SCORE = f"{F1_SCORE} ({TRAIN})"
         TRAIN_PRECISION = f"{PRECISION} ({TRAIN})"
         TRAIN_RECALL = f"{RECALL} ({TRAIN})"
+        TRAIN_SPECIFICITY = f"{SPECIFICITY} ({TRAIN})"
 
         TEST_ACCURACY = f"{ACCURACY} ({TEST})"
         TEST_F1_SCORE = f"{F1_SCORE} ({TEST})"
         TEST_PRECISION = f"{PRECISION} ({TEST})"
         TEST_RECALL = f"{RECALL} ({TEST})"
+        TEST_SPECIFICITY = f"{SPECIFICITY} ({TEST})"
     class Visualization:
         class Names:
             X_LABEL = "Liczba epok"
@@ -64,6 +67,7 @@ class Results:
             F1_SCORE = f"f1_score.{EXTENSION}"
             PRECISION = f"precision.{EXTENSION}"
             RECALL = f"recall.{EXTENSION}"
+            SPECIFICITY = f"specificity.{EXTENSION}"
 
 class CV:
     X_TRAIN = "X_train"

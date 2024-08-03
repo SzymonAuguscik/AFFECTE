@@ -286,7 +286,7 @@ class Learner:
 
     def _save_metrics(self, file: TextIO) -> None:
         """
-        Save metrics to the specified file. There are 8 metrics saved: TN, FP, FN, TP, accuracy, F1 score, precision, and recall.
+        Save metrics to the specified file. There are 8 metrics saved: TN, FP, FN, TP, accuracy, F1 score, precision, recall, and specificity.
 
         Parameters
         ----------
@@ -296,7 +296,7 @@ class Learner:
         """
         self._logger.debug(f"Saving metrics to {file}")
         self._save_selected_metrics(file, Results.Metrics.TN, Results.Metrics.FP, Results.Metrics.FN, Results.Metrics.TP)
-        self._save_selected_metrics(file, Results.Metrics.ACCURACY, Results.Metrics.F1_SCORE, Results.Metrics.PRECISION, Results.Metrics.RECALL)
+        self._save_selected_metrics(file, Results.Metrics.ACCURACY, Results.Metrics.F1_SCORE, Results.Metrics.PRECISION, Results.Metrics.RECALL, Results.Metrics.SPECIFICITY)
 
     def _save_training_time(self, file: TextIO) -> None:
         """
@@ -327,7 +327,7 @@ class Learner:
     def _plot_metrics(self, dirname: str) -> None:
         """
         Plot metrics gathered throughout the training and save the plots into specified directory.
-        The plotted metrics are: training loss and training/test accuracy, F1 score, precision, and recall.
+        The plotted metrics are: training loss and training/test accuracy, F1 score, precision, recall, and specificity.
 
         Parameters
         ----------
@@ -349,6 +349,9 @@ class Learner:
         self._visualizer.plot_learning_curves(os.path.join(dirname, Results.Visualization.Files.RECALL),\
                                               Results.Metrics.TRAIN_RECALL,\
                                               Results.Metrics.TEST_RECALL)
+        self._visualizer.plot_learning_curves(os.path.join(dirname, Results.Visualization.Files.SPECIFICITY),\
+                                              Results.Metrics.TRAIN_SPECIFICITY,\
+                                              Results.Metrics.TEST_SPECIFICITY)
 
     def train(self) -> None:
         """
@@ -356,7 +359,7 @@ class Learner:
         During the training part, for each epoch, the loss is calculated. Its value depends on the embedded attribute of a model
         (which is not None when model contains Transformer). When it is available, both entropy loss and link constraint loss are taken into account.
         Otherwise, link constraint one is skipped. For every batch the gradients are calculated based on the loss which are then used by optimizer.
-        During the evaluation part, the model makes predictions and is evaluated with 4 metrics: F1 score, accuracy, precision, and recall
+        During the evaluation part, the model makes predictions and is evaluated with 4 metrics: F1 score, accuracy, precision, recall, and specificity.
         referring to the training and test features/labels separately. The visualizer saves those metrics for further plotting purposes.
 
         """
@@ -398,21 +401,25 @@ class Learner:
             train_f1_score: float = f1_score(y_train_true, y_train_pred)
             train_precision: float = precision_score(y_train_true, y_train_pred)
             train_recall: float = recall_score(y_train_true, y_train_pred)
+            train_specificity: float = recall_score(y_train_true, y_train_pred, pos_label=0)
 
             self._logger.info(f"Accuracy score = {train_accuracy}")
             self._logger.debug(f"F1 score = {train_f1_score}")
             self._logger.debug(f"Precision score = {train_precision}")
             self._logger.debug(f"Recall score = {train_recall}")
+            self._logger.debug(f"Specificity score = {train_specificity}")
 
             test_accuracy: float = accuracy_score(y_test_true, y_test_pred)
             test_f1_score: float = f1_score(y_test_true, y_test_pred)
             test_precision: float = precision_score(y_test_true, y_test_pred)
             test_recall: float = recall_score(y_test_true, y_test_pred)
+            test_specificity: float = recall_score(y_test_true, y_test_pred, pos_label=0)
 
             self._logger.info(f"Accuracy score = {test_accuracy}")
             self._logger.debug(f"F1 score = {test_f1_score}")
             self._logger.debug(f"Precision score = {test_precision}")
             self._logger.debug(f"Recall score = {test_recall}")
+            self._logger.debug(f"Specificity score = {test_specificity}")
             
             self._visualizer.update_metric(Results.Metrics.LOSS, loss.item())
 
@@ -420,11 +427,13 @@ class Learner:
             self._visualizer.update_metric(Results.Metrics.TRAIN_F1_SCORE, train_f1_score)
             self._visualizer.update_metric(Results.Metrics.TRAIN_PRECISION, train_precision)
             self._visualizer.update_metric(Results.Metrics.TRAIN_RECALL, train_recall)
+            self._visualizer.update_metric(Results.Metrics.TRAIN_SPECIFICITY, train_specificity)
 
             self._visualizer.update_metric(Results.Metrics.TEST_ACCURACY, test_accuracy)
             self._visualizer.update_metric(Results.Metrics.TEST_F1_SCORE, test_f1_score)
             self._visualizer.update_metric(Results.Metrics.TEST_PRECISION, test_precision)
             self._visualizer.update_metric(Results.Metrics.TEST_RECALL, test_recall)
+            self._visualizer.update_metric(Results.Metrics.TEST_SPECIFICITY, test_specificity)
         
         self._logger.debug("Stopping timer...")
         self._timer.stop()
@@ -434,7 +443,8 @@ class Learner:
     def test(self, X: torch.Tensor, y: torch.Tensor) -> None:
         """
         Test model with given features and expected labels. After setting model into evaluation mode, the model makes predictions
-        which are then evaluated with 8 metrics: TN, FP, FN, TP, F1 score, accuracy, precision, and recall. Those results are then stored.
+        which are then evaluated with 8 metrics: TN, FP, FN, TP, F1 score, accuracy, precision, recall, and specificity.
+        Those results are then stored.
 
         Parameters
         ----------
@@ -464,6 +474,7 @@ class Learner:
         f1_metric: float = f1_score(y_true, y_pred)
         precision: float = precision_score(y_true, y_pred)
         recall: float = recall_score(y_true, y_pred)
+        specificity: float = recall_score(y_true, y_pred, pos_label=0)
 
         self._logger.debug(f"TN: {tn}")
         self._logger.debug(f"FP: {fp}")
@@ -473,16 +484,18 @@ class Learner:
         self._logger.debug(f"F1 score: {f1_metric}")
         self._logger.debug(f"Precision: {precision}")
         self._logger.debug(f"Recall: {recall}")
+        self._logger.debug(f"Specificity: {specificity}")
 
         results: Dict[str, float] = {
-            Results.Metrics.TN        : tn,
-            Results.Metrics.FP        : fp,
-            Results.Metrics.FN        : fn,
-            Results.Metrics.TP        : tp,
-            Results.Metrics.ACCURACY  : accuracy,
-            Results.Metrics.F1_SCORE  : f1_metric,
-            Results.Metrics.PRECISION : precision,
-            Results.Metrics.RECALL    : recall,
+            Results.Metrics.TN          : tn,
+            Results.Metrics.FP          : fp,
+            Results.Metrics.FN          : fn,
+            Results.Metrics.TP          : tp,
+            Results.Metrics.ACCURACY    : accuracy,
+            Results.Metrics.F1_SCORE    : f1_metric,
+            Results.Metrics.PRECISION   : precision,
+            Results.Metrics.RECALL      : recall,
+            Results.Metrics.SPECIFICITY : specificity,
         }
         self._results.append(results)
 
