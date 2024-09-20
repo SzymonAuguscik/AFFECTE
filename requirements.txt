@@ -56,6 +56,7 @@ soundfile==0.11.0
 spectrum==0.8.1
 sympy==1.11.1
 threadpoolctl==3.1.0
+tk==0.1.0
 torch==2.0.0
 triton==2.0.0
 typing-extensions==4.5.0

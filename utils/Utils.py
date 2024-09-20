@@ -1,4 +1,5 @@
 from constants import Time
+from typing import List
 from math import floor
 
 import numpy as np
@@ -133,9 +134,9 @@ def add(ecg_signal: torch.Tensor, channel_1: int, channel_2: int) -> torch.Tenso
     ecg_signal : torch.Tensor
         Source ECG signal of N x C x V size (N - samples number, C - channels, V - values).
     channel_1 : int
-        First summand channel (N x 1 x V size).
+        First summand channel number (corresponding to N x 1 x V size).
     channel_2 : int
-        Second summand channel (N x 1 x V size).
+        Second summand channel number (corresponding to N x 1 x V size).
 
     Returns
     -------
@@ -143,4 +144,23 @@ def add(ecg_signal: torch.Tensor, channel_1: int, channel_2: int) -> torch.Tenso
 
     """
     return (ecg_signal[:,channel_1,:] + ecg_signal[:,channel_2,:]).unsqueeze(1)
+
+def add_noise_to_signal(ecg_signal: torch.Tensor, *channels: List[int]) -> torch.Tensor:
+    """
+    Add Gaussian noise to the signal.
+
+    Parameters
+    ----------
+    ecg_signal : torch.Tensor
+        Source ECG signal of N x C x V size (N - samples number, C - channels, V - values).
+    channels : List[int]
+        Channel numbers to add noise (corresponding to N x len(channels) x V size).
+
+    Returns
+    -------
+        New ECG signal channel (N x C x V size).
+    """
+    mean = torch.mean(ecg_signal[:, channels, :])
+    std = torch.std(ecg_signal[:, channels, :])
+    return ecg_signal[:, channels, :] + np.random.normal(mean, std, ecg_signal[:, channels, :].size()).astype(np.float32)
 
