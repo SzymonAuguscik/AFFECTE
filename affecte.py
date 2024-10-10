@@ -2,14 +2,14 @@
 AFFECTE - Atrial Fibrillation Finder from Electrocardiogram with Convolution and Transformer Encoder
 """
 
-from utils.Utils import init_logger
-from models.AtrialFibrillationDetector import AtrialFibrillationDetector
-from utils.CrossValidator import CrossValidator
-from utils.Learner import Learner
-from utils.EcgSignalAugmenter import EcgSignalAugmenter
-from utils.EcgSignalLoader import EcgSignalLoader
+from src.utils.Utils import init_logger
+from src.models.AtrialFibrillationDetector import AtrialFibrillationDetector
+from src.utils.CrossValidator import CrossValidator
+from src.utils.Learner import Learner
+from src.utils.EcgSignalAugmenter import EcgSignalAugmenter
+from src.utils.EcgSignalLoader import EcgSignalLoader
 from typing import List
-from constants import Paths
+from src.constants import Paths
 
 import numpy as np
 

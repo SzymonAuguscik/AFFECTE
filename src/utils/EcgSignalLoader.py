@@ -1,7 +1,7 @@
-from utils.Utils import preprocess_signal, format_time
+from src.utils.Utils import preprocess_signal, format_time
+from src.utils.TensorManager import TensorManager
 from typing import List, Tuple, Optional, Dict
-from utils.TensorManager import TensorManager
-from constants import Tags, Time, Paths
+from src.constants import Tags, Time, Paths
 
 import numpy as np
 

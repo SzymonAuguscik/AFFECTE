@@ -1,5 +1,5 @@
 from .FeedForwardClassifier import FeedForwardClassifier
-from constants import Hyperparameters
+from src.constants import Hyperparameters
 from .Transformer import Transformer
 from typing import Dict, Optional
 from .Cnn import Cnn

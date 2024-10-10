@@ -1,4 +1,4 @@
-from constants import Hyperparameters
+from src.constants import Hyperparameters
 
 import logging
 import torch

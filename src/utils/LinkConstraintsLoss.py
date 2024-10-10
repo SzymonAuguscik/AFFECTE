@@ -1,6 +1,8 @@
 import numpy as np
 
+import warnings
 import torch
+warnings.filterwarnings("ignore", category=UserWarning)
 
 
 class LinkConstraintsLoss(torch.nn.Module):

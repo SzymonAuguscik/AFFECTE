@@ -1,4 +1,4 @@
-from utils.Utils import add, add_noise_to_signal
+from src.utils.Utils import add, add_noise_to_signal
 from typing import List, Callable
 from enum import Enum
 
