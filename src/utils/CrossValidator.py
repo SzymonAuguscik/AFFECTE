@@ -1,6 +1,6 @@
 from typing import Optional, Iterator, Dict, List, Tuple
 from sklearn.utils import shuffle
-from constants import CV
+from src.constants import CV
 
 import logging
 import torch

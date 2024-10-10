@@ -1,4 +1,4 @@
-from constants import Time
+from src.constants import Time
 from typing import List
 from math import floor
 

@@ -1,10 +1,10 @@
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
-from utils.LinkConstraintsLoss import LinkConstraintsLoss
+from src.utils.LinkConstraintsLoss import LinkConstraintsLoss
+from src.constants import Results, Paths, Hyperparameters
 from sklearn.exceptions import UndefinedMetricWarning
-from constants import Results, Paths, Hyperparameters
 from typing import Dict, List, TextIO, Optional
-from utils.Visualizer import Visualizer
-from utils.Timer import Timer
+from src.utils.Visualizer import Visualizer
+from src.utils.Timer import Timer
 from functools import reduce
 
 import numpy as np
