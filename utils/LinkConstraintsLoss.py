@@ -68,3 +68,4 @@ class LinkConstraintsLoss(torch.nn.Module):
         j: torch.Tensor = torch.arange(beta.size(0)).to(self._device)
         loss: float = 0.5 * torch.norm(beta[i, 0] - e[i, j] * beta[j, 0], p=2)
         return loss
+
