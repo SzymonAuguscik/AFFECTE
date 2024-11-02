@@ -108,7 +108,9 @@ class Cnn(torch.nn.Module):
         channels : int
             The number of channels for the input data used in every 1D convolution layer.
         input_dim : int
-            The input dimension used for calculations of the input size for head linear layer.
+            The input dimension used for calculations of the input size for linear layer head.
+            Due to convolution/pooling operations, minimal input dimension must be Hyperparameters.Cnn.MINIMAL_INPUT_DIMENSION.
+            If smaller value is provided, it will be automatically changed to the minimal value.
         output_dim : int
             The output dimension of the whole network.
 
@@ -280,7 +282,8 @@ class Cnn(torch.nn.Module):
         Parameters
         ----------
         input_dim : int
-            The size of the input data.
+            The size of the input data. It will be set to the minimal value
+            if too small value is provided.
 
         Returns
         -------
@@ -288,6 +291,10 @@ class Cnn(torch.nn.Module):
             The data dimension after applying all Cnn layers but head.
 
         """
+        if input_dim < Hyperparameters.Cnn.MINIMAL_INPUT_DIMENSION:
+            self._logger.error(f"Provided input dimension = {input_dim} is too small! Setting the input dimension to {Hyperparameters.Cnn.MINIMAL_INPUT_DIMENSION}")
+            input_dim = Hyperparameters.Cnn.MINIMAL_INPUT_DIMENSION
+
         mutable_size_layers: List[torch.nn.Module] = [module for module in self.modules() if isinstance(module, torch.nn.Conv1d) or isinstance(module, torch.nn.MaxPool1d)]
         conv_pool_layers_pairs: List[Tuple[torch.nn.Module, torch.nn.Module]] = list(zip(mutable_size_layers[0::2], mutable_size_layers[1::2]))
         dim: int = input_dim

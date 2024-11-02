@@ -1,6 +1,10 @@
-from src.utils.Utils import add, add_noise_to_signal
+from src.exceptions.InvalidAugmentationStrategyAndModeCombinationException import InvalidAugmentationStrategyAndModeCombinationException
+from src.exceptions.UnknownAugmentationStrategyException import UnknownAugmentationStrategyException
+from src.exceptions.UnknownAugmentationModeException import UnknownAugmentationModeException
+from src.utils.Utils import add, add_noise_to_signal, get_enum_value
+from src.enums.AugmentationStrategy import AugmentationStrategy
+from src.enums.AugmentationMode import AugmentationMode
 from typing import List, Callable
-from enum import Enum
 
 import logging
 import torch
@@ -36,8 +40,9 @@ class EcgSignalAugmenter:
     X = ecg_signal_augmenter.augment()
 
     """
-    AugmentationStrategy = Enum("AugmentationStrategy", ["ADD", "NOISE"])
-    AugmentationMode = Enum("AugmentationMode", ["APPEND", "MODIFY"])
+    INVALID_STRATEGY_MODE_COMBINATIONS = [
+        (AugmentationStrategy.ADD, AugmentationMode.MODIFY)
+    ]
 
     def __init__(self, X: List[torch.Tensor], steps_file_path: str) -> None:
         """
@@ -67,15 +72,35 @@ class EcgSignalAugmenter:
             a new channel using specified ones.
         channels : List[int]
             A list of ECG channels to be used when augmenting a new one.
+        mode : AugmentationMode
+            A mode which specifies whether the existing channels should be modified
+            or a new channel should be appended.
 
         """
-        if mode == self.AugmentationMode.APPEND:
+        if mode == AugmentationMode.APPEND:
             self._ecg_signal: List[torch.Tensor] = [torch.cat((signal, fun(signal, *channels)), dim=1) for signal in self._ecg_signal]
-        elif mode == self.AugmentationMode.MODIFY:
+        if mode == AugmentationMode.MODIFY:
             self._ecg_signal: List[torch.Tensor] = [fun(signal, *channels) for signal in self._ecg_signal]
-        else:
-            #TODO exception
-            self._logger.error(f"Unknown mode {mode}!")
+
+    def _is_augmentation_strategy_and_mode_combination_valid(self, strategy: AugmentationStrategy, mode: AugmentationMode) -> bool:
+        """
+        Check if augmentation strategy and mode are valid.
+
+        Parameters
+        ----------
+        strategy : AugmentationStrategy
+            A strategy which specifies the function to create a new ECG channel.
+        mode : AugmentationMode
+            A mode which specifies whether the existing channels should be modified
+            or a new channel should be appended.
+
+        Returns
+        -------
+        bool
+            The validation result (if given augmentation strategy and mode can be applied together).
+
+        """
+        return (strategy, mode) not in self.INVALID_STRATEGY_MODE_COMBINATIONS
 
     def _augment_on_strategy(self, strategy: AugmentationStrategy, channels: List[int], mode: AugmentationMode) -> None:
         """
@@ -92,16 +117,15 @@ class EcgSignalAugmenter:
             or a new channel should be appended.
 
         """
+        if not self._is_augmentation_strategy_and_mode_combination_valid(strategy, mode):
+            raise InvalidAugmentationStrategyAndModeCombinationException(strategy, mode)
         # TODO new strategies
-        if strategy == self.AugmentationStrategy.ADD:
+        if strategy == AugmentationStrategy.ADD:
             self._logger.debug(f"Adding channels {channels}")
             self._create_new_channel(add, channels, mode)
-        elif strategy == self.AugmentationStrategy.NOISE:
+        if strategy == AugmentationStrategy.NOISE:
             self._logger.debug(f"Adding noise to channels {channels}")
             self._create_new_channel(add_noise_to_signal, channels, mode)
-        else:
-            #TODO exception
-            self._logger.error(f"Unknown strategy {strategy}!")
 
     def augment(self) -> List[torch.Tensor]:
         """
@@ -120,8 +144,11 @@ class EcgSignalAugmenter:
             for step in steps.readlines():
                 strategy: str
                 channels: List[int]
+                mode: str
                 strategy, *channels, mode = step.split()
                 channels = [int(channel) for channel in channels]
-                self._augment_on_strategy(self.AugmentationStrategy[strategy], channels, self.AugmentationMode[mode])
+                self._augment_on_strategy(get_enum_value(strategy, AugmentationStrategy, UnknownAugmentationStrategyException),
+                                          channels,
+                                          get_enum_value(mode, AugmentationMode, UnknownAugmentationModeException))
 
         return self._ecg_signal

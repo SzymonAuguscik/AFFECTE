@@ -95,6 +95,7 @@ class Hyperparameters:
         EPOCHS = "epochs"
 
     class Cnn:
+        MINIMAL_INPUT_DIMENSION = 90
         class Layer1:
             class Conv:
                 KERNEL_SIZE = 30

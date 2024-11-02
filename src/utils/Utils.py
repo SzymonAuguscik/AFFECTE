@@ -1,23 +1,24 @@
+from wfdb.processing import resample_sig
+from typing import List, Any, TypeVar
 from src.constants import Time
-from typing import List
 from math import floor
+from enum import Enum
 
 import numpy as np
 
 import scipy.signal
 import logging
 import torch
-import wfdb
 import sys
 
 
-def format_time(time_fraction: float) -> str:
+def format_time(time_in_hours: float) -> str:
     """"
     Format time from hours to hours, minutes, and seconds.
 
     Parameters
     ----------
-    time_fraction : float
+    time_in_hours : float
         Time in hours.
 
     Returns
@@ -26,10 +27,10 @@ def format_time(time_fraction: float) -> str:
         Time in "HH:MM:SS" format.
 
     """
-    hours: int = floor(time_fraction)
-    precise_minutes: float = (time_fraction - hours) * Time.MINUTES_IN_HOUR
+    hours: int = floor(time_in_hours)
+    precise_minutes: float = (time_in_hours - hours) * Time.MINUTES_IN_HOUR
     minutes: int = floor(precise_minutes)
-    seconds: int = int((precise_minutes - minutes) * Time.SECONDS_IN_MINUTE)
+    seconds: int = round((precise_minutes - minutes) * Time.SECONDS_IN_MINUTE)
     return f"{hours}:{minutes}:{seconds}"
 
 def bandpass_filter(signal: np.ndarray) -> np.ndarray:
@@ -73,7 +74,7 @@ def preprocess_signal(signal: np.ndarray, fs: float) -> np.ndarray:
 
     """
     for i in range(signal.shape[1]):
-        signal[:, i], _ = wfdb.processing.resample_sig(signal[:, i], fs, 128)
+        signal[:, i], _ = resample_sig(signal[:, i], fs, 128)
         signal[:, i] -= scipy.signal.medfilt(signal[:, i], int(0.2 * 128))
         signal[:, i] -= scipy.signal.medfilt(signal[:, i], int(0.6 * 128) + 1)
         signal[:, i] -= bandpass_filter(signal[:, i])
@@ -163,4 +164,30 @@ def add_noise_to_signal(ecg_signal: torch.Tensor, *channels: List[int]) -> torch
     mean = torch.mean(ecg_signal[:, channels, :])
     std = torch.std(ecg_signal[:, channels, :])
     return ecg_signal[:, channels, :] + np.random.normal(mean, std, ecg_signal[:, channels, :].size()).astype(np.float32)
+
+def get_enum_value(item: Any, enum_class: Enum, exception: TypeVar('Exception', bound='Exception')) -> Enum:
+    """
+    Get item from enumeration type.
+
+    Parameters
+    ----------
+    item : Any
+        Item to be retrieved from enumeration type.
+    enum_class : Enum
+        Enumeration type to be checked.
+    exception : Exception
+        Exception to be raised if item does not belong to the enumeration type.
+
+    Raises
+    ------
+    Exception
+        When item is not present in the enumeration type.
+
+    Returns
+    -------
+        Enumeration type item.
+    """
+    if item not in enum_class:
+        raise exception(item)
+    return enum_class[item]
 

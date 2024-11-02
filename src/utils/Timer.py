@@ -1,3 +1,5 @@
+from src.exceptions.TimerNotStartedException import TimerNotStartedException
+from src.exceptions.TimerNotStoppedException import TimerNotStoppedException
 from typing import Optional
 
 import logging
@@ -38,10 +40,9 @@ class Timer:
         self._logger.debug(f"Start time = {self._start_time}s")
 
     def stop(self) -> None:
-        """Stop current measurement. Each call overwrites _measured_time"""
+        """Stop current measurement. Each call overwrites _measured_time."""
         if self._start_time is None:
-            self._logger.error("Timer was not started!")
-            return
+            raise TimerNotStartedException()
         self._measured_time = time.time() - self._start_time
         self._logger.debug(f"Measured time = {self._measured_time}s")
 
@@ -51,16 +52,16 @@ class Timer:
 
         Raises
         ------
-        #TODO
+        TimerNotStartedException
+            when timer.stop() method was used before timer.start().
 
         Returns
         -------
         _measured_time : Optional[float]
-            time between start() and last stop() calls
+            time between start() and last stop() calls.
 
         """
         if self._measured_time is not None:
             return self._measured_time
-        # TODO exception
-        self._logger.error("Time was not measured! Has the timer been started?")
+        raise TimerNotStoppedException()
 

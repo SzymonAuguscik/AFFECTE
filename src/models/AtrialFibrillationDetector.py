@@ -168,7 +168,7 @@ class AtrialFibrillationDetector(torch.nn.Module):
         """
         self._logger.debug("Starting forward pass!")
         self._logger.debug(f"Data size: {x.size()}")
-        # TODO potential refactor - booleans
+
         if self._use_cnn:
             x = self._cnn(x)
             self._logger.debug("cnn(x) done")

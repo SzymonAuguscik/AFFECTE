@@ -129,5 +129,5 @@ The most accurate model and learning configurations:
 ## Future work
 
 - [x] Add docstrings
-- [ ] Add UTs
+- [x] Add UTs
 - [ ] Split classes into smaller ones

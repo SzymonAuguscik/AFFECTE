@@ -1,8 +1,8 @@
 from typing import Optional, Iterator, Dict, List, Tuple
-from sklearn.utils import shuffle
 from src.constants import CV
 
 import logging
+import sklearn
 import torch
 
 
@@ -107,7 +107,7 @@ class CrossValidator:
         """
         X: List[torch.Tensor]
         y: List[torch.Tensor]
-        X, y = shuffle(self._X, self._y)
+        X, y = sklearn.utils.shuffle(self._X, self._y)
 
         step: int = len(X) // self._k
         remainder: int = len(y) % self._k
@@ -159,7 +159,6 @@ class CrossValidator:
             The test labels.
 
         """
-        # TODO potential bug
         X_train: torch.Tensor = torch.cat(fold[CV.X_TRAIN])
         y_train: torch.Tensor = torch.cat(fold[CV.Y_TRAIN])
         X_test: torch.Tensor = torch.cat(fold[CV.X_TEST])
@@ -169,15 +168,14 @@ class CrossValidator:
         size: int = self._dataset_custom_size if self._dataset_custom_size else dataset_size
         self._logger.debug(f"Size = {size}")
 
-        # TODO check and remove min (use only round(...))
-        train_size: int = min(round((1 - self._test_size_coef) * size), 2 * (y_train == 0).size(0), 2 * (y_train == 1).size(0))
-        test_size: int = min(round(self._test_size_coef * size), 2 * (y_test == 0).size(0), 2 * (y_test == 1).size(0))
+        train_size: int = round((1 - self._test_size_coef) * size)
+        test_size: int = round(self._test_size_coef * size)
         
         self._logger.debug(f"Test size: {test_size}")
         self._logger.debug(f"Train size: {train_size}")
         
-        X_train, y_train = shuffle(X_train, y_train)
-        X_test, y_test = shuffle(X_test, y_test)
+        X_train, y_train = sklearn.utils.shuffle(X_train, y_train)
+        X_test, y_test = sklearn.utils.shuffle(X_test, y_test)
 
         X_train, y_train = X_train[:train_size], y_train[:train_size]
         X_test, y_test = X_test[:test_size], y_test[:test_size]
