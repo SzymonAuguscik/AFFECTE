@@ -49,7 +49,7 @@ class LinkConstraintsLoss(torch.nn.Module):
         super(LinkConstraintsLoss, self).__init__()
         self._device: torch.device = device
 
-    def forward(self, beta: torch.Tensor, e: np.ndarray) -> float:
+    def forward(self, beta: torch.Tensor, e: torch.Tensor) -> float:
         """
         Perform forward pass of the data.
 
@@ -57,7 +57,7 @@ class LinkConstraintsLoss(torch.nn.Module):
         ----------
         beta : torch.Tensor
             The input data to be propagated.
-        e : np.ndarray
+        e : torch.Tensor
             Link coefficients to be used for link constraints.
 
         Returns
@@ -68,6 +68,6 @@ class LinkConstraintsLoss(torch.nn.Module):
         """
         i: torch.Tensor = torch.arange(beta.size(0)).reshape(-1, 1).to(self._device)
         j: torch.Tensor = torch.arange(beta.size(0)).to(self._device)
-        loss: float = 0.5 * torch.norm(beta[i, 0] - e[i, j] * beta[j, 0], p=2)
+        loss: float = 0.5 * torch.norm(beta[i, 0] - e[i, j] * beta[j, 0], p=2).item()
         return loss
 

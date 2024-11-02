@@ -229,7 +229,7 @@ class EcgSignalLoader:
         else:
             self._logger.debug(f"Creating dataset...")
             self._logger.debug(f"{len(self._subjects)} subjects to be loaded")
-            
+
             for subject in self._subjects:
                 self._logger.debug(f"Reading subject no. {subject}")
 

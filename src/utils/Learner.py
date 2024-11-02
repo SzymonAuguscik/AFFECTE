@@ -315,7 +315,7 @@ class Learner:
 
                 embedded: Optional[torch.Tensor] = self._model.embedded
                 if embedded is not None:
-                    link_coefficients: np.ndarray = self._get_link_coefficients(y)
+                    link_coefficients: torch.Tensor = self._get_link_coefficients(y)
                     loss += 1e-8 * self._lc_loss(embedded, link_coefficients)
                 
                 self._logger.debug("Updating weights...")
