@@ -104,7 +104,7 @@ class Learner:
             The number of the epochs. In other words, the training duration.
 
         """
-        self._device: torch.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self._device: torch.device = "cpu"#torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self._model: torch.nn.Module = model.to(self._device)
         self._X_train: torch.Tensor = X_train.to(self._device)
         self._y_train: torch.Tensor = y_train.to(self._device)
