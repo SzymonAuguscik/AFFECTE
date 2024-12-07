@@ -1,8 +1,9 @@
 from typing import Any
 
+import warnings
 import logging
 import torch
-
+warnings.filterwarnings("ignore", category=FutureWarning)
 
 class TensorManager:
     """
