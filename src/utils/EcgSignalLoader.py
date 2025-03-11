@@ -227,7 +227,7 @@ class EcgSignalLoader:
             self._X = self._tensor_manager.load(os.path.join(dirname, Paths.Files.FEATURES))
             self._y = self._tensor_manager.load(os.path.join(dirname, Paths.Files.LABELS))
         else:
-            self._logger.debug(f"Creating dataset...")
+            self._logger.debug("Creating dataset...")
             self._logger.debug(f"{len(self._subjects)} subjects to be loaded")
 
             for subject in self._subjects:

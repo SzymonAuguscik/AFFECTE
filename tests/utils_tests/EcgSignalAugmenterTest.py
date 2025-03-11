@@ -93,12 +93,12 @@ class EcgSignalAugmenterTest(UnitTest):
     def test_append_noise_augmentation(self, noise_mock, open_mock) -> None:
         augmented_data: List[torch.Tensor] = self.ecg_signal_augmenter.augment()
 
-        for actual_data, expected_data in zip([torch.cat((signal, augmented_signal), dim=1) for signal, augmented_signal in zip(self.X, self.X_NOISE)], augmented_data):
+        for actual_data, expected_data in zip([torch.cat((signal, augmented_signal), dim=1) for signal, augmented_signal in zip(self.X, self.X_APPEND_NOISE)], augmented_data):
             self.assertTrue(torch.equal(actual_data, expected_data))
 
     @patch("builtins.open", new_callable=mock_open, read_data=MODIFY_NOISE_AUGMENTATION_CONFIG_FILE)
     @patch("src.utils.EcgSignalAugmenter.add_noise_to_signal", side_effect=[*X_MODIFY_NOISE])
-    def test_append_noise_augmentation(self, noise_mock, open_mock) -> None:
+    def test_modify_noise_augmentation(self, noise_mock, open_mock) -> None:
         augmented_data: List[torch.Tensor] = self.ecg_signal_augmenter.augment()
 
         for actual_data, expected_data in zip(self.X_MODIFY_NOISE, augmented_data):
