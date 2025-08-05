@@ -38,17 +38,6 @@ git clone https://github.com/SzymonAuguscik/AFFECTE
 cd AFFECTE
 ```
 
-Create virtual environment for *AFFECTE* and activate it:
-```bash
-python3.10 -m venv affecte_venv
-source affecte_venv/bin/activate
-```
-
-Install required libraries:
-```bash
-venv/bin/pip3 install -r requirements.txt
-```
-
 Create data directory with necessary subfolders:
 ```bash
 mkdir -p data/archives data/datasets data/long-term-af-database-1.0.0
@@ -58,6 +47,38 @@ Download MIT-BIT Long Term AF Database and unzip it:
 ```bash
 wget -P data/archives https://physionet.org/static/published-projects/ltafdb/long-term-af-database-1.0.0.zip
 unzip data/archives/long-term-af-database-1.0.0.zip -d data/long-term-af-database-1.0.0/
+```
+
+### Docker approach
+
+Create *.env* file with following entries:
+```bash
+COMPOSE_PROJECT_NAME=<project_name>
+UID=<uid>
+GID=<gid>
+```
+
+Build *affecte* image:
+```bash
+docker compose build
+```
+
+Run exemplary *affecte* container (you can add *affecte.py* arguments at the end):
+```bash
+docker compose run --rm affecte
+```
+
+### venv approach
+
+Create virtual environment for *AFFECTE* and activate it:
+```bash
+python3.10 -m venv affecte_venv
+source affecte_venv/bin/activate
+```
+
+Install required libraries:
+```bash
+venv/bin/pip3 install -r requirements.txt
 ```
 
 Verify setup by running exemplary script:
