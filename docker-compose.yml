@@ -1,0 +1,19 @@
+services:
+  affecte:
+    build: .
+    image: affecte-image:latest
+    container_name: affecte
+    user: "${UID}:${GID}"
+    volumes:
+      - ./data:/affecte/data
+      - ./results:/affecte/results
+    entrypoint: ["python3", "affecte.py"]
+  unit_tests:
+    build: .
+    image: affecte-uts:latest
+    container_name: unit_tests
+    user: "${UID}:${GID}"
+    volumes:
+      - ./tests:/affecte/tests:ro
+    command: ["python3", "-W", "ignore:UserWarning", "-m", "unittest", "discover", "-s", "tests", "-p", "*.py", "-q"]
+        # command: ["ls", "-la", "tests"]
