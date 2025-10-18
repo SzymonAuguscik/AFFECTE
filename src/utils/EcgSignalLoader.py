@@ -5,7 +5,6 @@ from src.constants import Tags, Time, Paths
 
 import numpy as np
 
-import wfdb.processing
 import logging
 import torch
 import wfdb

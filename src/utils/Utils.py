@@ -1,3 +1,5 @@
+import warnings
+warnings.filterwarnings("ignore", category=SyntaxWarning)
 from wfdb.processing import resample_sig
 from typing import List, Any, TypeVar
 from src.constants import Time

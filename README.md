@@ -1,6 +1,6 @@
 # AFFECTE - Atrial Fibrillation Finder from Electrocardiogram with Convolution and Transformer Encoder
 
-*AFFECTE* is a Python3.10 package to build a Transformer-based neural network to detect atrial fibrillation using ECG signal.
+*AFFECTE* is a Python3.12 package to build a Transformer-based neural network to detect atrial fibrillation using ECG signal.
 It was inspired by [Constrained transformer network for ECG signal processing and arrhythmia classification](https://bmcmedinformdecismak.biomedcentral.com/articles/10.1186/s12911-021-01546-2). 
 The models were trained on [MIT-BIH Long Term AF Database](https://physionet.org/content/ltafdb/1.0.0/).
 

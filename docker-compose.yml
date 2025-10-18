@@ -5,7 +5,7 @@ services:
     container_name: affecte
     user: "${UID}:${GID}"
     volumes:
-      - ./data:/affecte/data
+      - ./data/long-term-af-database-1.0.0:/affecte/data/long-term-af-database-1.0.0
       - ./results:/affecte/results
     entrypoint: ["python3", "affecte.py"]
   unit_tests:
@@ -16,4 +16,3 @@ services:
     volumes:
       - ./tests:/affecte/tests:ro
     command: ["python3", "-W", "ignore:UserWarning", "-m", "unittest", "discover", "-s", "tests", "-p", "*.py", "-q"]
-        # command: ["ls", "-la", "tests"]
