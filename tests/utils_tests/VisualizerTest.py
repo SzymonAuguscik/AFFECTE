@@ -12,9 +12,9 @@ class VisualizerTest(UnitTest):
         self.visualizer: Visualizer = Visualizer()
 
     def test_update_metric(self) -> None:
-        self.visualizer._metrics = {
-            self.METRIC_NAME : self.METRIC_VALUES.copy()
-        }
+        self.visualizer._metrics = {self.METRIC_NAME: self.METRIC_VALUES.copy()}
         self.visualizer.update_metric(self.METRIC_NAME, self.NEW_VALUE)
-        self.assertEqual(self.visualizer._metrics[self.METRIC_NAME], self.METRIC_VALUES + [self.NEW_VALUE])
-
+        self.assertEqual(
+            self.visualizer._metrics[self.METRIC_NAME],
+            self.METRIC_VALUES + [self.NEW_VALUE],
+        )

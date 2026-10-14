@@ -41,6 +41,7 @@ class EcgSignalLoader:
         y = y.int()
 
     """
+
     def __init__(self, data_path: str) -> None:
         """
         Initiate EcgSignalLoader with all subjects for _subjects and default values for other attributes.
@@ -73,11 +74,15 @@ class EcgSignalLoader:
             The annotations of all subjects.
 
         """
-        records_path: str = os.path.join(Paths.Directories.DATA, records_dir, Paths.Files.RECORDS)
+        records_path: str = os.path.join(
+            Paths.Directories.DATA, records_dir, Paths.Files.RECORDS
+        )
         with open(records_path) as file:
-            return file.read().strip().split('\n')
+            return file.read().strip().split("\n")
 
-    def _load_signal(self, records_dir: str, subject: str) -> Tuple[wfdb.Record, List[str], np.ndarray]:
+    def _load_signal(
+        self, records_dir: str, subject: str
+    ) -> Tuple[wfdb.Record, List[str], np.ndarray]:
         """
         Load ECG signal for specific subject.
 
@@ -102,12 +107,17 @@ class EcgSignalLoader:
         record_path: str = os.path.join(Paths.Directories.DATA, records_dir, subject)
         record: wfdb.Record = wfdb.rdrecord(record_path)
         subject_path: str = os.path.join(Paths.Directories.DATA, records_dir, subject)
-        annotation: wfdb.Annotation = wfdb.rdann(subject_path, 'atr')
-        symbols: List[str] = annotation.aux_note              
+        annotation: wfdb.Annotation = wfdb.rdann(subject_path, "atr")
+        symbols: List[str] = annotation.aux_note
         samples: np.ndarray = annotation.sample
         return record, symbols, samples
 
-    def _split_signal_by_af(self, signal: np.ndarray, rhythm_intervals: Dict[str, List[Tuple[int, int]]], chunk_size: int) -> Tuple[List[np.ndarray], List[int]]:
+    def _split_signal_by_af(
+        self,
+        signal: np.ndarray,
+        rhythm_intervals: Dict[str, List[Tuple[int, int]]],
+        chunk_size: int,
+    ) -> Tuple[List[np.ndarray], List[int]]:
         """
         Split singal into atrial fibrillation and non attrial fibrillation chunks.
 
@@ -138,14 +148,16 @@ class EcgSignalLoader:
             for interval in intervals:
                 for idx in range(interval[0], interval[1], chunk_size):
                     chunk: np.ndarray = signal[idx : idx + chunk_size]
-                    
+
                     if len(chunk) == chunk_size:
                         chunks.append(chunk)
                         labels.append(int(is_af))
 
         return chunks, labels
 
-    def _create_data_from_subject(self, records_dir: str, subject: str, seconds: int) -> Tuple[List[np.ndarray], List[int]]:
+    def _create_data_from_subject(
+        self, records_dir: str, subject: str, seconds: int
+    ) -> Tuple[List[np.ndarray], List[int]]:
         """
         Read data for given subject, perform filtration (signal preprocessing and removing unneeded signal annotations)
         and split signal based on atrial fibrillation.
@@ -173,7 +185,9 @@ class EcgSignalLoader:
 
         start_sample: int = 0
         start_symbol: Optional[str] = None
-        rhythm_intervals: Dict[str, List[Tuple[int, int]]] = {rhythm_type : [] for rhythm_type in Tags.ARRHYTHMIA_SYMBOLS}
+        rhythm_intervals: Dict[str, List[Tuple[int, int]]] = {
+            rhythm_type: [] for rhythm_type in Tags.ARRHYTHMIA_SYMBOLS
+        }
 
         for sample, symbol in zip(samples, symbols):
             if symbol in Tags.SYMBOLS_TO_IGNORE:
@@ -185,19 +199,32 @@ class EcgSignalLoader:
 
             start_symbol = symbol
             start_sample = sample
-        
-        self._logger.debug("Preprocessing signal: resampling, 2 median filters and bandpass filter")
+
+        self._logger.debug(
+            "Preprocessing signal: resampling, 2 median filters and bandpass filter"
+        )
         signal: np.ndarray = preprocess_signal(record.p_signal, record.fs)
         rhythm_intervals[start_symbol].append((start_sample, len(signal)))
-        rhythm_intervals = { symbol : rhythm_intervals[symbol] for symbol in Tags.CLASSIFICATION_SYMBOLS }
-        rhythms: Dict[str, int] = { rhythm_type : sum(list(map(lambda interval: interval[1] - interval[0], intervals))) for rhythm_type, intervals in rhythm_intervals.items() }
+        rhythm_intervals = {
+            symbol: rhythm_intervals[symbol] for symbol in Tags.CLASSIFICATION_SYMBOLS
+        }
+        rhythms: Dict[str, int] = {
+            rhythm_type: sum(
+                list(map(lambda interval: interval[1] - interval[0], intervals))
+            )
+            for rhythm_type, intervals in rhythm_intervals.items()
+        }
 
-        self._logger.info(f"{[(rhythm_type, format_time(rhythm / Time.MINUTES_IN_HOUR / Time.SECONDS_IN_MINUTE / record.fs)) for rhythm_type, rhythm in rhythms.items()]}")
-        
+        self._logger.info(
+            f"{[(rhythm_type, format_time(rhythm / Time.MINUTES_IN_HOUR / Time.SECONDS_IN_MINUTE / record.fs)) for rhythm_type, rhythm in rhythms.items()]}"
+        )
+
         chunk_size: int = int(seconds * record.fs)
         return self._split_signal_by_af(signal, rhythm_intervals, chunk_size)
 
-    def prepare_dataset(self, channels: List[int], seconds: int) -> Tuple[List[torch.Tensor], List[torch.Tensor]]:
+    def prepare_dataset(
+        self, channels: List[int], seconds: int
+    ) -> Tuple[List[torch.Tensor], List[torch.Tensor]]:
         """
         Create dataset from all available subjects ECG signals. Signal is split to seconds length windows.
         Only specified channels are taken into account. If dataset has not been created yet, it prepares the features and labels
@@ -218,13 +245,21 @@ class EcgSignalLoader:
             List of labels per subject (arrhythmia annotations).
 
         """
-        dirname: str = os.path.join(Paths.Directories.DATA, Paths.Directories.DATASETS, f"{seconds}_seconds")
+        dirname: str = os.path.join(
+            Paths.Directories.DATA, Paths.Directories.DATASETS, f"{seconds}_seconds"
+        )
         self._logger.debug(f"Checking {dirname}")
 
         if os.path.exists(dirname):
-            self._logger.debug(f"Found directory {dirname} with already created dataset! Now loading it...")
-            self._X = self._tensor_manager.load(os.path.join(dirname, Paths.Files.FEATURES))
-            self._y = self._tensor_manager.load(os.path.join(dirname, Paths.Files.LABELS))
+            self._logger.debug(
+                f"Found directory {dirname} with already created dataset! Now loading it..."
+            )
+            self._X = self._tensor_manager.load(
+                os.path.join(dirname, Paths.Files.FEATURES)
+            )
+            self._y = self._tensor_manager.load(
+                os.path.join(dirname, Paths.Files.LABELS)
+            )
         else:
             self._logger.debug("Creating dataset...")
             self._logger.debug(f"{len(self._subjects)} subjects to be loaded")
@@ -234,17 +269,27 @@ class EcgSignalLoader:
 
                 data: List[np.ndarray]
                 labels: List[int]
-                data, labels = self._create_data_from_subject(self._data_path, subject, seconds)
+                data, labels = self._create_data_from_subject(
+                    self._data_path, subject, seconds
+                )
 
-                X_subject: torch.Tensor = torch.tensor(np.array(data), dtype=torch.float32).permute(0, 2, 1)
-                y_subject: torch.Tensor = torch.tensor(np.array(labels), dtype=torch.float32).reshape(-1, 1)
+                X_subject: torch.Tensor = torch.tensor(
+                    np.array(data), dtype=torch.float32
+                ).permute(0, 2, 1)
+                y_subject: torch.Tensor = torch.tensor(
+                    np.array(labels), dtype=torch.float32
+                ).reshape(-1, 1)
                 self._X.append(X_subject)
                 self._y.append(y_subject)
 
             os.mkdir(dirname)
             self._logger.debug(f"Saving dataset to {dirname}")
-            self._tensor_manager.save(self._X, os.path.join(dirname, Paths.Files.FEATURES))
-            self._tensor_manager.save(self._y, os.path.join(dirname, Paths.Files.LABELS))
+            self._tensor_manager.save(
+                self._X, os.path.join(dirname, Paths.Files.FEATURES)
+            )
+            self._tensor_manager.save(
+                self._y, os.path.join(dirname, Paths.Files.LABELS)
+            )
 
             self._logger.info("Dataset ready!")
             self._logger.info(f"No. of samples: {len(torch.cat(self._y))}")
@@ -254,4 +299,3 @@ class EcgSignalLoader:
                 self._X[i] = self._X[i][:, channels, :]
 
         return self._X, self._y
-

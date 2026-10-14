@@ -24,4 +24,3 @@ class TimerTest(UnitTest):
     def test_timer_not_stopped(self) -> None:
         self.timer.start()
         self.assertRaises(TimerNotStoppedException, self.timer.get_time)
-

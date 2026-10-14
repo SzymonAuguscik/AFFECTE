@@ -19,20 +19,40 @@ class CrossValidatorTest(UnitTest):
     TEST_INDICES: List[int] = [8, 3]
     VALIDATION_STEP: int = 0
 
-    @patch("sklearn.utils.shuffle", side_effect=[(get_multiple_indices(X, SHUFFLED_INDICES), get_multiple_indices(Y, SHUFFLED_INDICES))])
+    @patch(
+        "sklearn.utils.shuffle",
+        side_effect=[
+            (
+                get_multiple_indices(X, SHUFFLED_INDICES),
+                get_multiple_indices(Y, SHUFFLED_INDICES),
+            )
+        ],
+    )
     def setUp(self, shuffle_mock) -> None:
         self.cross_validator: CrossValidator = CrossValidator(self.X, self.Y)
 
-    @patch("sklearn.utils.shuffle", side_effect=[(get_multiple_indices(X, TRAIN_INDICES), get_multiple_indices(Y, TRAIN_INDICES)),
-                                                 (get_multiple_indices(X, TEST_INDICES), get_multiple_indices(Y, TEST_INDICES))])
+    @patch(
+        "sklearn.utils.shuffle",
+        side_effect=[
+            (
+                get_multiple_indices(X, TRAIN_INDICES),
+                get_multiple_indices(Y, TRAIN_INDICES),
+            ),
+            (
+                get_multiple_indices(X, TEST_INDICES),
+                get_multiple_indices(Y, TEST_INDICES),
+            ),
+        ],
+    )
     def test_folds_preparing(self, shuffle_mock) -> None:
         X_train: torch.Tensor
         y_train: torch.Tensor
         X_test: torch.Tensor
         y_test: torch.Tensor
-        X_train, y_train, X_test, y_test = self.cross_validator.prepare_fold(self.cross_validator[self.VALIDATION_STEP])
+        X_train, y_train, X_test, y_test = self.cross_validator.prepare_fold(
+            self.cross_validator[self.VALIDATION_STEP]
+        )
         self.assertEqual(X_train, get_multiple_indices(self.X, self.TRAIN_INDICES))
         self.assertEqual(y_train, get_multiple_indices(self.Y, self.TRAIN_INDICES))
         self.assertEqual(X_test, get_multiple_indices(self.X, self.TEST_INDICES))
         self.assertEqual(y_test, get_multiple_indices(self.Y, self.TEST_INDICES))
-

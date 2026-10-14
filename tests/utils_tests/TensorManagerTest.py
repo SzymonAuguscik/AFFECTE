@@ -20,4 +20,3 @@ class TensorManagerTest(UnitTest):
         tensor_mock: MagicMock = MagicMock()
         self.tensor_manager.save(tensor_mock, self.TENSOR_PATH)
         torch_save.assert_called_once_with(tensor_mock, self.TENSOR_PATH)
-

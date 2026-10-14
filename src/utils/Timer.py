@@ -28,6 +28,7 @@ class Timer:
     measured_time = timer.get_time()
 
     """
+
     def __init__(self) -> None:
         """Initiate the timer with default logger."""
         self._start_time: Optional[float] = None
@@ -64,4 +65,3 @@ class Timer:
         if self._measured_time is not None:
             return self._measured_time
         raise TimerNotStoppedException()
-

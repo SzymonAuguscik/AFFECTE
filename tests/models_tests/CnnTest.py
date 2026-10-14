@@ -15,7 +15,9 @@ class CnnTest(UnitTest):
         kernel_size: int = 24
         padding: int = 3
         stride: int = 2
-        output_dim: int = self.cnn._calculate_output_dim(self.INPUT_DIMENSION, kernel_size, padding, stride)
+        output_dim: int = self.cnn._calculate_output_dim(
+            self.INPUT_DIMENSION, kernel_size, padding, stride
+        )
         expected_output_dim: int = 56
         self.assertEqual(output_dim, expected_output_dim)
 
@@ -26,8 +28,15 @@ class CnnTest(UnitTest):
         maxpool_kernel_size: int = 16
         maxpool_padding: int = 2
         maxpool_stride: int = 5
-        output_dim: int = self.cnn._calculate_next_layer_size(self.INPUT_DIMENSION, conv_kernel_size, conv_padding, conv_stride,
-                                                             maxpool_kernel_size, maxpool_padding, maxpool_stride)
+        output_dim: int = self.cnn._calculate_next_layer_size(
+            self.INPUT_DIMENSION,
+            conv_kernel_size,
+            conv_padding,
+            conv_stride,
+            maxpool_kernel_size,
+            maxpool_padding,
+            maxpool_stride,
+        )
         expected_output_dim: int = 5
         self.assertEqual(output_dim, expected_output_dim)
 
@@ -41,4 +50,3 @@ class CnnTest(UnitTest):
         last_layer_dim: int = self.cnn._calculate_last_layer_dim(too_small_input_data)
         expected_last_layer_dim: int = 12
         self.assertEqual(last_layer_dim, expected_last_layer_dim)
-

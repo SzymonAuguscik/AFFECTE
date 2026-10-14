@@ -40,7 +40,13 @@ class CrossValidator:
 
     """
 
-    def __init__(self, X: List[torch.Tensor], y: List[torch.Tensor], dataset_custom_size: Optional[int] = None, k: int = 5):
+    def __init__(
+        self,
+        X: List[torch.Tensor],
+        y: List[torch.Tensor],
+        dataset_custom_size: Optional[int] = None,
+        k: int = 5,
+    ):
         """
         Initiate CrossValidator with the lists of features and labels and prepare folds by splitting those lists.
 
@@ -62,7 +68,9 @@ class CrossValidator:
         self._k: int = k
         self._test_size_coef: float = 1.0 / self._k
         self._logger: logging.Logger = logging.getLogger(__name__)
-        self._folds: List[Dict[str, List[torch.Tensor]]] = self._cross_validation_split()
+        self._folds: List[Dict[str, List[torch.Tensor]]] = (
+            self._cross_validation_split()
+        )
 
     def __iter__(self) -> Iterator[List[Dict[str, List[torch.Tensor]]]]:
         """
@@ -120,23 +128,25 @@ class CrossValidator:
         for i in range(self._k):
             right_pivot = left_pivot + step
             self._logger.debug(f"Interval: ({left_pivot}, {right_pivot})")
-            
+
             if i < remainder:
                 right_pivot += 1
 
             fold: Dict[str, List[torch.Tensor]] = {
-                CV.X_TRAIN : X[:left_pivot] + X[right_pivot:],
-                CV.Y_TRAIN : y[:left_pivot] + y[right_pivot:],
-                CV.X_TEST  : X[left_pivot : right_pivot],
-                CV.Y_TEST  : y[left_pivot : right_pivot]
+                CV.X_TRAIN: X[:left_pivot] + X[right_pivot:],
+                CV.Y_TRAIN: y[:left_pivot] + y[right_pivot:],
+                CV.X_TEST: X[left_pivot:right_pivot],
+                CV.Y_TEST: y[left_pivot:right_pivot],
             }
             folds.append(fold)
-            
+
             left_pivot = right_pivot
-        
+
         return folds
 
-    def prepare_fold(self, fold: Dict[str, List[torch.Tensor]]) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    def prepare_fold(
+        self, fold: Dict[str, List[torch.Tensor]]
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Prepare train/test sets of given fold. The preparation relies on determining if custom dataset size should be used
         and setting the train/test sizes with respect to the fewer class examples (therefore, it is more probable
@@ -165,21 +175,23 @@ class CrossValidator:
         y_test: torch.Tensor = torch.cat(fold[CV.Y_TEST])
 
         dataset_size: int = y_train.size(0) + y_test.size(0)
-        size: int = self._dataset_custom_size if self._dataset_custom_size else dataset_size
+        size: int = (
+            self._dataset_custom_size if self._dataset_custom_size else dataset_size
+        )
         self._logger.debug(f"Size = {size}")
 
         train_size: int = round((1 - self._test_size_coef) * size)
         test_size: int = round(self._test_size_coef * size)
-        
+
         self._logger.debug(f"Test size: {test_size}")
         self._logger.debug(f"Train size: {train_size}")
-        
+
         X_train, y_train = sklearn.utils.shuffle(X_train, y_train)
         X_test, y_test = sklearn.utils.shuffle(X_test, y_test)
 
         X_train, y_train = X_train[:train_size], y_train[:train_size]
         X_test, y_test = X_test[:test_size], y_test[:test_size]
-        
+
         arr_train: float
         arr_test: float
         arr_train, arr_test = sum(y_train) / len(y_train), sum(y_test) / len(y_test)
@@ -187,4 +199,3 @@ class CrossValidator:
         self._logger.debug(f"Arrhytmia fraction for test set = {arr_test}")
 
         return X_train, y_train, X_test, y_test
-
