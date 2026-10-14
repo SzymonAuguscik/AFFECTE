@@ -6,6 +6,7 @@ services:
     user: "${UID}:${GID}"
     volumes:
       - ./data/long-term-af-database-1.0.0:/affecte/data/long-term-af-database-1.0.0
+      - ./data/datasets:/affecte/data/datasets
       - ./results:/affecte/results
     entrypoint: ["python3", "affecte.py"]
   unit_tests:
