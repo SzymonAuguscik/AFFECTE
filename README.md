@@ -72,12 +72,17 @@ docker compose run --rm affecte
 
 Create virtual environment for *AFFECTE*:
 ```bash
-uv sync
+uv sync --extra cu130
 ```
 
 Verify setup by running exemplary script:
 ```bash
-uv run affecte.py
+uv run --extra cu130 affecte.py
+```
+
+Run unit tests with CPU-only PyTorch:
+```bash
+uv run --extra cpu pytest
 ```
 
 ## Usage

@@ -1,6 +1,8 @@
 services:
   affecte:
-    build: .
+    build:
+      context: .
+      target: app
     image: affecte-image:latest
     container_name: affecte
     user: "${UID}:${GID}"
@@ -10,7 +12,9 @@ services:
       - ./results:/affecte/results
     entrypoint: ["python3", "affecte.py"]
   unit_tests:
-    build: .
+    build:
+      context: .
+      target: unit_tests
     image: affecte-uts:latest
     container_name: unit_tests
     user: "${UID}:${GID}"

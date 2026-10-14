@@ -1,1 +1,1 @@
-uv run pytest
+uv run --extra cpu pytest

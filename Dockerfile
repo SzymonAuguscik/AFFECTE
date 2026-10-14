@@ -7,23 +7,38 @@ RUN apt-get update && \
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 
-FROM tools AS libraries
+FROM tools AS app-libraries
 
 WORKDIR /usr
 
 COPY pyproject.toml uv.lock ./
 
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --locked --no-install-project
+    uv sync --locked --no-install-project --no-dev --extra cu130
 
-FROM python:3.12-slim AS app
+FROM tools AS test-libraries
+
+WORKDIR /usr
+
+COPY pyproject.toml uv.lock ./
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --locked --no-install-project --extra cpu
+
+FROM python:3.12-slim AS runtime
 
 WORKDIR /affecte
-
-COPY --from=libraries /usr/.venv /usr/.venv
 
 ENV PATH="/usr/.venv/bin:$PATH"
 ENV MPLCONFIGDIR=/tmp/matplotlib
 
 COPY affecte.py .
 COPY src ./src
+
+FROM runtime AS app
+
+COPY --from=app-libraries /usr/.venv /usr/.venv
+
+FROM runtime AS unit_tests
+
+COPY --from=test-libraries /usr/.venv /usr/.venv
