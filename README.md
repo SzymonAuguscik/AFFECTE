@@ -1,7 +1,7 @@
 # AFFECTE - Atrial Fibrillation Finder from Electrocardiogram with Convolution and Transformer Encoder
 
 *AFFECTE* is a Python3.12 package to build a Transformer-based neural network to detect atrial fibrillation using ECG signal.
-It was inspired by [Constrained transformer network for ECG signal processing and arrhythmia classification](https://bmcmedinformdecismak.biomedcentral.com/articles/10.1186/s12911-021-01546-2). 
+It was inspired by [Constrained transformer network for ECG signal processing and arrhythmia classification](https://bmcmedinformdecismak.biomedcentral.com/articles/10.1186/s12911-021-01546-2).
 The models were trained on [MIT-BIH Long Term AF Database](https://physionet.org/content/ltafdb/1.0.0/).
 
 Table of contents:
@@ -100,38 +100,38 @@ affecte [-h]
         [--use_cnn]
         [--use_transformer]
 ```
-- **-h, --help**  
+- **-h, --help**
 show this help message and exit
-- **-c CHANNEL [CHANNEL ...], --channels CHANNEL [CHANNEL ...]**  
+- **-c CHANNEL [CHANNEL ...], --channels CHANNEL [CHANNEL ...]**
 ECG channels to be used in the training (default: [0, 1])
-- **-s [1-60], --seconds [1-60]**  
+- **-s [1-60], --seconds [1-60]**
 length of the windows that the ECG signal will be split (default: 10)
-- **-e [1-500], --epochs [1-500]**  
+- **-e [1-500], --epochs [1-500]**
 training iterations (default: 50)
-- **-l LEARNING_RATE, --learning_rate LEARNING_RATE**  
+- **-l LEARNING_RATE, --learning_rate LEARNING_RATE**
 learning rate to be used in the optimizer (default: 0.0001)
-- **-b [1-2048], --batch_size [1-2048]**  
+- **-b [1-2048], --batch_size [1-2048]**
 the data samples used per epoch (default: 128)
-- **-t [1-2048], --transformer_dimension [1-2048]**  
+- **-t [1-2048], --transformer_dimension [1-2048]**
 d_model for Transformer (default: 128)
-- **-f [1-2048], --transformer_hidden_dimension [1-2048]**  
+- **-f [1-2048], --transformer_hidden_dimension [1-2048]**
 dimension of feed forward layers in Transformer (default: 256)
-- **-a [1-128], --transformer_heads [1-128]**  
+- **-a [1-128], --transformer_heads [1-128]**
 number of attention heads per encoder in Transformer (default: 16)
-- **-n [1-64], --transformer_encoder_layers [1-64]**  
+- **-n [1-64], --transformer_encoder_layers [1-64]**
 number of encoding layers in Transformer (default: 8)
-- **-d [1-1000000], --dataset_custom_size [1-1000000]**  
+- **-d [1-1000000], --dataset_custom_size [1-1000000]**
 set how many samples should be used from dataset; use all samples if not set (default: None)
-- **-v [0-4], --validation_step [0-4]**  
+- **-v [0-4], --validation_step [0-4]**
 choose which cross validation fold should be used as test set (default: 0)
-- **--use_cnn**  
+- **--use_cnn**
 if set, use CNN layer in the main model (default: False)
-- **--use_transformer**  
+- **--use_transformer**
 if set, use Transformer layer in the main model (default: False)
 
 ## Best results
 
-So far the best mean accuracy score achieved by a model during five-fold cross validation was ***90.8% &plusmn; 1.0%***.  
+So far the best mean accuracy score achieved by a model during five-fold cross validation was ***90.8% &plusmn; 1.0%***.
 The most accurate model and learning configurations:
 - Transformer dimension: 32
 - Transformer hidden dimension: 256
