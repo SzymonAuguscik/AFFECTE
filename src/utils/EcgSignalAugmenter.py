@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, List
+from collections.abc import Callable
 
 import torch
 
@@ -48,13 +48,12 @@ class EcgSignalAugmenter:
 
     """
 
-    INVALID_STRATEGY_MODE_COMBINATIONS = [
-        (AugmentationStrategy.ADD, AugmentationMode.MODIFY)
-    ]
+    INVALID_STRATEGY_MODE_COMBINATIONS = [(AugmentationStrategy.ADD, AugmentationMode.MODIFY)]
 
-    def __init__(self, X: List[torch.Tensor], steps_file_path: str) -> None:
+    def __init__(self, X: list[torch.Tensor], steps_file_path: str) -> None:
         """
-        Initiate EcgSignalAugmenter with the ECG signal to be augmented and augmentation steps filepath.
+        Initiate EcgSignalAugmenter with the ECG signal
+        to be augmented and augmentation steps filepath.
 
         Parameters
         ----------
@@ -66,13 +65,13 @@ class EcgSignalAugmenter:
         """
         self._logger: logging.Logger = logging.getLogger(__name__)
         self._steps_file_path: str = steps_file_path
-        self._ecg_signal: List[torch.Tensor] = X
+        self._ecg_signal: list[torch.Tensor] = X
 
     # TODO decorators?
     def _create_new_channel(
         self,
-        fun: Callable[[torch.Tensor, List[int]], torch.Tensor],
-        channels: List[int],
+        fun: Callable[[torch.Tensor, list[int]], torch.Tensor],
+        channels: list[int],
         mode: AugmentationMode,
     ) -> None:
         """
@@ -91,12 +90,11 @@ class EcgSignalAugmenter:
 
         """
         if mode == AugmentationMode.APPEND:
-            self._ecg_signal: List[torch.Tensor] = [
-                torch.cat((signal, fun(signal, *channels)), dim=1)
-                for signal in self._ecg_signal
+            self._ecg_signal: list[torch.Tensor] = [
+                torch.cat((signal, fun(signal, *channels)), dim=1) for signal in self._ecg_signal
             ]
         if mode == AugmentationMode.MODIFY:
-            self._ecg_signal: List[torch.Tensor] = [
+            self._ecg_signal: list[torch.Tensor] = [
                 fun(signal, *channels) for signal in self._ecg_signal
             ]
 
@@ -125,7 +123,7 @@ class EcgSignalAugmenter:
     def _augment_on_strategy(
         self,
         strategy: AugmentationStrategy,
-        channels: List[int],
+        channels: list[int],
         mode: AugmentationMode,
     ) -> None:
         """
@@ -142,9 +140,7 @@ class EcgSignalAugmenter:
             or a new channel should be appended.
 
         """
-        if not self._is_augmentation_strategy_and_mode_combination_valid(
-            strategy, mode
-        ):
+        if not self._is_augmentation_strategy_and_mode_combination_valid(strategy, mode):
             raise InvalidAugmentationStrategyAndModeCombinationException(strategy, mode)
         # TODO new strategies
         if strategy == AugmentationStrategy.ADD:
@@ -154,7 +150,7 @@ class EcgSignalAugmenter:
             self._logger.debug(f"Adding noise to channels {channels}")
             self._create_new_channel(add_noise_to_signal, channels, mode)
 
-    def augment(self) -> List[torch.Tensor]:
+    def augment(self) -> list[torch.Tensor]:
         """
         Augment ECG signal using augmentation steps file.
         The number of augmented channels is equal to the number
@@ -167,10 +163,10 @@ class EcgSignalAugmenter:
 
         """
         self._logger.info("Augmenting ECG data")
-        with open(self._steps_file_path, "r") as steps:
-            for step in steps.readlines():
+        with open(self._steps_file_path) as steps:
+            for step in steps:
                 strategy: str
-                channels: List[int]
+                channels: list[int]
                 mode: str
                 strategy, *channels, mode = step.split()
                 channels = [int(channel) for channel in channels]
@@ -181,9 +177,7 @@ class EcgSignalAugmenter:
                         UnknownAugmentationStrategyException,
                     ),
                     channels,
-                    get_enum_value(
-                        mode, AugmentationMode, UnknownAugmentationModeException
-                    ),
+                    get_enum_value(mode, AugmentationMode, UnknownAugmentationModeException),
                 )
 
         return self._ecg_signal

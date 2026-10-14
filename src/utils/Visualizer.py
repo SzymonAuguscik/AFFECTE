@@ -1,5 +1,4 @@
 import logging
-from typing import Dict, List
 
 from matplotlib import pyplot as plt
 
@@ -30,15 +29,20 @@ class Visualizer:
         visualizer.update_metric(Results.Metrics.TRAIN_ACCURACY, accuracy)
 
     visualizer.plot_train_loss("/plots/train_loss")
-    visualizer.plot_learning_curves("/plots/learning_curves", Results.Metrics.TEST_F1_SCORE, Results.Metrics.TRAIN_ACCURACY)
+    visualizer.plot_learning_curves("/plots/learning_curves",
+                                    Results.Metrics.TEST_F1_SCORE,
+                                    Results.Metrics.TRAIN_ACCURACY)
 
     """
 
     def __init__(self) -> None:
-        """Initiate Visualizer with default logger and metrics: loss, accuracy, precision, recall, and F1 score"""
+        """
+        Initiate Visualizer with default logger and metrics:
+        loss, accuracy, precision, recall, and F1 score
+        """
         self._logger: logging.Logger = logging.getLogger(__name__)
         # TODO consider removing default metrics and adding custom ones by user
-        self._metrics: Dict[str, List[float]] = {
+        self._metrics: dict[str, list[float]] = {
             Results.Metrics.LOSS: [],
             Results.Metrics.TRAIN_ACCURACY: [],
             Results.Metrics.TRAIN_F1_SCORE: [],
@@ -81,7 +85,7 @@ class Visualizer:
         plt.xlabel(Results.Visualization.Names.X_LABEL)
         plt.ylabel(Results.Metrics.LOSS)
         plt.plot(
-            range(0, len(self._metrics[Results.Metrics.LOSS])),
+            range(len(self._metrics[Results.Metrics.LOSS])),
             self._metrics[Results.Metrics.LOSS],
         )
         plt.savefig(filename, format=Results.Visualization.Files.EXTENSION)
@@ -104,6 +108,6 @@ class Visualizer:
         plt.ylabel(Results.Visualization.Names.LR_Y_LABEL)
         plt.ylim(0, 1)
         for metric in metrics:
-            plt.plot(range(0, len(self._metrics[metric])), self._metrics[metric])
+            plt.plot(range(len(self._metrics[metric])), self._metrics[metric])
         plt.legend(metrics)
         plt.savefig(filename, format=Results.Visualization.Files.EXTENSION)

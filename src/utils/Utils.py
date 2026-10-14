@@ -3,7 +3,7 @@ import sys
 import warnings
 from enum import Enum
 from math import floor
-from typing import Any, List, TypeVar
+from typing import Any, TypeVar
 
 import numpy as np
 import scipy.signal
@@ -157,7 +157,7 @@ def add(ecg_signal: torch.Tensor, channel_1: int, channel_2: int) -> torch.Tenso
     return (ecg_signal[:, channel_1, :] + ecg_signal[:, channel_2, :]).unsqueeze(1)
 
 
-def add_noise_to_signal(ecg_signal: torch.Tensor, *channels: List[int]) -> torch.Tensor:
+def add_noise_to_signal(ecg_signal: torch.Tensor, *channels: list[int]) -> torch.Tensor:
     """
     Add Gaussian noise to the signal.
 

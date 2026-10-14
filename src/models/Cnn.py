@@ -1,5 +1,4 @@
 import logging
-from typing import List, Tuple
 
 import torch
 
@@ -8,8 +7,10 @@ from src.constants import Hyperparameters
 
 class Cnn(torch.nn.Module):
     """
-    Cnn is a model built from 7 similar layers and linear head. Each layer consists of 5 sublayers: 1D convolution, 1D batch normalization, activation (ReLU),
-    1D max pooling, and dropout. Each layer has its own set of fixed parameters for its sublayers. Head is composed of flattening and linear layers.
+    Cnn is a model built from 7 similar layers and linear head.
+    Each layer consists of 5 sublayers: 1D convolution, 1D batch normalization, activation (ReLU),
+    1D max pooling, and dropout. Each layer has its own set of fixed parameters for its sublayers.
+    Head is composed of flattening and linear layers.
     Network accepts input with multiple channels.
 
     Attributes
@@ -111,13 +112,14 @@ class Cnn(torch.nn.Module):
             The number of channels for the input data used in every 1D convolution layer.
         input_dim : int
             The input dimension used for calculations of the input size for linear layer head.
-            Due to convolution/pooling operations, minimal input dimension must be Hyperparameters.Cnn.MINIMAL_INPUT_DIMENSION.
+            Due to convolution/pooling operations, minimal input dimension
+            must be Hyperparameters.Cnn.MINIMAL_INPUT_DIMENSION.
             If smaller value is provided, it will be automatically changed to the minimal value.
         output_dim : int
             The output dimension of the whole network.
 
         """
-        super(Cnn, self).__init__()
+        super().__init__()
         self._logger: logging.Logger = logging.getLogger(__name__)
         self._channels: int = channels
 
@@ -136,9 +138,7 @@ class Cnn(torch.nn.Module):
             stride=Hyperparameters.Cnn.Layer1.MaxPool.STRIDE,
             padding=Hyperparameters.Cnn.Layer1.MaxPool.PADDING,
         )
-        self._drop1: torch.nn.Dropout = torch.nn.Dropout(
-            Hyperparameters.Cnn.Layer1.DROPOUT
-        )
+        self._drop1: torch.nn.Dropout = torch.nn.Dropout(Hyperparameters.Cnn.Layer1.DROPOUT)
 
         # Layer 2
         self._conv2: torch.nn.Conv1d = torch.nn.Conv1d(
@@ -155,9 +155,7 @@ class Cnn(torch.nn.Module):
             stride=Hyperparameters.Cnn.Layer2.MaxPool.STRIDE,
             padding=Hyperparameters.Cnn.Layer2.MaxPool.PADDING,
         )
-        self._drop2: torch.nn.Dropout = torch.nn.Dropout(
-            Hyperparameters.Cnn.Layer2.DROPOUT
-        )
+        self._drop2: torch.nn.Dropout = torch.nn.Dropout(Hyperparameters.Cnn.Layer2.DROPOUT)
 
         # Layer 3
         self._conv3: torch.nn.Conv1d = torch.nn.Conv1d(
@@ -174,9 +172,7 @@ class Cnn(torch.nn.Module):
             stride=Hyperparameters.Cnn.Layer3.MaxPool.STRIDE,
             padding=Hyperparameters.Cnn.Layer3.MaxPool.PADDING,
         )
-        self._drop3: torch.nn.Dropout = torch.nn.Dropout(
-            Hyperparameters.Cnn.Layer3.DROPOUT
-        )
+        self._drop3: torch.nn.Dropout = torch.nn.Dropout(Hyperparameters.Cnn.Layer3.DROPOUT)
 
         # Layer 4
         self._conv4: torch.nn.Conv1d = torch.nn.Conv1d(
@@ -193,9 +189,7 @@ class Cnn(torch.nn.Module):
             stride=Hyperparameters.Cnn.Layer4.MaxPool.STRIDE,
             padding=Hyperparameters.Cnn.Layer4.MaxPool.PADDING,
         )
-        self._drop4: torch.nn.Dropout = torch.nn.Dropout(
-            Hyperparameters.Cnn.Layer4.DROPOUT
-        )
+        self._drop4: torch.nn.Dropout = torch.nn.Dropout(Hyperparameters.Cnn.Layer4.DROPOUT)
 
         # Layer 5
         self._conv5: torch.nn.Conv1d = torch.nn.Conv1d(
@@ -212,9 +206,7 @@ class Cnn(torch.nn.Module):
             stride=Hyperparameters.Cnn.Layer5.MaxPool.STRIDE,
             padding=Hyperparameters.Cnn.Layer5.MaxPool.PADDING,
         )
-        self._drop5: torch.nn.Dropout = torch.nn.Dropout(
-            Hyperparameters.Cnn.Layer5.DROPOUT
-        )
+        self._drop5: torch.nn.Dropout = torch.nn.Dropout(Hyperparameters.Cnn.Layer5.DROPOUT)
 
         # Layer 6
         self._conv6: torch.nn.Conv1d = torch.nn.Conv1d(
@@ -231,9 +223,7 @@ class Cnn(torch.nn.Module):
             stride=Hyperparameters.Cnn.Layer6.MaxPool.STRIDE,
             padding=Hyperparameters.Cnn.Layer6.MaxPool.PADDING,
         )
-        self._drop6: torch.nn.Dropout = torch.nn.Dropout(
-            Hyperparameters.Cnn.Layer6.DROPOUT
-        )
+        self._drop6: torch.nn.Dropout = torch.nn.Dropout(Hyperparameters.Cnn.Layer6.DROPOUT)
 
         # Layer 7
         self._conv7: torch.nn.Conv1d = torch.nn.Conv1d(
@@ -250,9 +240,7 @@ class Cnn(torch.nn.Module):
             stride=Hyperparameters.Cnn.Layer7.MaxPool.STRIDE,
             padding=Hyperparameters.Cnn.Layer7.MaxPool.PADDING,
         )
-        self._drop7: torch.nn.Dropout = torch.nn.Dropout(
-            Hyperparameters.Cnn.Layer7.DROPOUT
-        )
+        self._drop7: torch.nn.Dropout = torch.nn.Dropout(Hyperparameters.Cnn.Layer7.DROPOUT)
 
         # Head
         self._flat: torch.nn.Flatten = torch.nn.Flatten()
@@ -265,7 +253,8 @@ class Cnn(torch.nn.Module):
         self, input_dim: int, kernel_size: int, padding: int, stride: int
     ) -> int:
         """
-        Calculate output dimension from 1D convolution/max pooling layer based on input data size, kernel size, padding, and stride.
+        Calculate output dimension from 1D convolution/max pooling layer based on
+        input data size, kernel size, padding, and stride.
 
         Parameters
         ----------
@@ -353,18 +342,18 @@ class Cnn(torch.nn.Module):
         """
         if input_dim < Hyperparameters.Cnn.MINIMAL_INPUT_DIMENSION:
             self._logger.error(
-                f"Provided input dimension = {input_dim} is too small! Setting the input dimension to {Hyperparameters.Cnn.MINIMAL_INPUT_DIMENSION}"
+                f"Provided input dimension = {input_dim} is too small! \
+                Setting the input dimension to {Hyperparameters.Cnn.MINIMAL_INPUT_DIMENSION}"
             )
             input_dim = Hyperparameters.Cnn.MINIMAL_INPUT_DIMENSION
 
-        mutable_size_layers: List[torch.nn.Module] = [
+        mutable_size_layers: list[torch.nn.Module] = [
             module
             for module in self.modules()
-            if isinstance(module, torch.nn.Conv1d)
-            or isinstance(module, torch.nn.MaxPool1d)
+            if isinstance(module, torch.nn.Conv1d) or isinstance(module, torch.nn.MaxPool1d)
         ]
-        conv_pool_layers_pairs: List[Tuple[torch.nn.Module, torch.nn.Module]] = list(
-            zip(mutable_size_layers[0::2], mutable_size_layers[1::2])
+        conv_pool_layers_pairs: list[tuple[torch.nn.Module, torch.nn.Module]] = list(
+            zip(mutable_size_layers[0::2], mutable_size_layers[1::2], strict=True)
         )
         dim: int = input_dim
         self._logger.debug(f"Input dim = {dim}")

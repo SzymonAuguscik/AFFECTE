@@ -45,7 +45,7 @@ class FeedForwardClassifier(torch.nn.Module):
             The number of the input features to the model.
 
         """
-        super(FeedForwardClassifier, self).__init__()
+        super().__init__()
         self._logger: logging.Logger = logging.getLogger(__name__)
         self._linear1: torch.nn.Linear = torch.nn.Linear(
             in_features=in_features,

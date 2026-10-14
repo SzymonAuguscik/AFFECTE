@@ -8,14 +8,16 @@ from src.constants import Hyperparameters
 class Transformer(torch.nn.Module):
     """
     Transformer is a transformer encoder which consists of encoder layers only.
-    Each encoder layer is the same (e.g. has fixed layer normalization coefficient and activation for FFNs).
+    Each encoder layer is the same (e.g. has fixed layer normalization coefficient
+    and activation for FFNs).
 
     Attributes
     ----------
     _logger : logging.Logger
         Used for logging purposes.
     _d_model : int
-        The expected number of features. In other words, it is a number of all possible feature values
+        The expected number of features.
+        In other words, it is a number of all possible feature values
         after embedding.
     _encoder : torch.nn.TransformerEncoder
         The stack of encoding layers.
@@ -41,7 +43,7 @@ class Transformer(torch.nn.Module):
         encoder_layers: int,
     ) -> None:
         """
-        Build a Transformer encoder from individual layers and initialize weights with Xavier method.
+        Build Transformer encoder from individual layers and initialize weights with Xavier method.
 
         Parameters
         ----------
@@ -55,19 +57,17 @@ class Transformer(torch.nn.Module):
             The number of encoder layers in Transformer encoder.
 
         """
-        super(Transformer, self).__init__()
+        super().__init__()
         self._logger: logging.Logger = logging.getLogger(__name__)
         self._d_model: int = d_model
-        encoder_layer: torch.nn.TransformerEncoderLayer = (
-            torch.nn.TransformerEncoderLayer(
-                d_model=self._d_model,
-                nhead=heads_number,
-                dim_feedforward=hidden_dimension,
-                activation=torch.nn.LeakyReLU(),
-                batch_first=True,
-                norm_first=True,
-                layer_norm_eps=Hyperparameters.Transformer.LAYER_NORM_EPS,
-            )
+        encoder_layer: torch.nn.TransformerEncoderLayer = torch.nn.TransformerEncoderLayer(
+            d_model=self._d_model,
+            nhead=heads_number,
+            dim_feedforward=hidden_dimension,
+            activation=torch.nn.LeakyReLU(),
+            batch_first=True,
+            norm_first=True,
+            layer_norm_eps=Hyperparameters.Transformer.LAYER_NORM_EPS,
         )
 
         self._init_weights(encoder_layer.linear1, encoder_layer.linear2)

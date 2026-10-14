@@ -5,7 +5,6 @@ AFFECTE - Atrial Fibrillation Finder from Electrocardiogram with Convolution and
 import argparse
 import logging
 import random
-from typing import List
 
 import numpy as np
 import torch
@@ -29,7 +28,7 @@ if __name__ == "__main__":
     parser: argparse.ArgumentParser = argparse.ArgumentParser(
         prog="affecte",
         description="Script to train and test model to classify atrial fibrillation",
-        epilog="Atrial Fibrillation Finder from Electrocardiogram with Convolution and Transformer Encoder",
+        epilog="Atrial Fibrillation Finder from Electrocardiogram with Convolution and Transformer Encoder",  # noqa: E501
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
@@ -124,7 +123,7 @@ if __name__ == "__main__":
         "-v",
         "--validation_step",
         default=0,
-        choices=range(0, 5),
+        choices=range(5),
         metavar="[0-4]",
         type=int,
         help="choose which cross validation fold should be used as test set",
@@ -142,13 +141,13 @@ if __name__ == "__main__":
     logger: logging.Logger = init_logger()
     logger.info("Loading subjects...")
 
-    channels: List[int] = args.channels
+    channels: list[int] = args.channels
     seconds: int = args.seconds
     logger.debug(f"Data will be split into {seconds} seconds intervals")
 
     ecg_signal_loader: EcgSignalLoader = EcgSignalLoader(Paths.Directories.LONG_TERM_AF)
-    X: List[torch.Tensor]
-    y: List[torch.Tensor]
+    X: list[torch.Tensor]
+    y: list[torch.Tensor]
     X, y = ecg_signal_loader.prepare_dataset(channels=channels, seconds=seconds)
 
     if len(channels) > 2:
