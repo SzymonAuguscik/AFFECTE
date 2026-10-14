@@ -16,4 +16,4 @@ services:
     user: "${UID}:${GID}"
     volumes:
       - ./tests:/affecte/tests:ro
-    command: ["python3", "-W", "ignore:UserWarning", "-m", "unittest", "discover", "-s", "tests", "-p", "*.py", "-q"]
+    command: ["python3", "-W", "ignore:UserWarning", "-m", "pytest", "-q"]

@@ -1,6 +1,6 @@
-from typing import List
 from unittest.mock import mock_open, patch
 
+import pytest
 import torch
 
 from src.exceptions.InvalidAugmentationStrategyAndModeCombinationException import (
@@ -13,12 +13,11 @@ from src.exceptions.UnknownAugmentationStrategyException import (
     UnknownAugmentationStrategyException,
 )
 from src.utils.EcgSignalAugmenter import EcgSignalAugmenter
-from tests import UnitTest
 
 
-class EcgSignalAugmenterTest(UnitTest):
+class TestEcgSignalAugmenter:
     FILEPATH: str = "/path/to/augmentation/config/file.txt"
-    X: List[torch.Tensor] = [
+    X: list[torch.Tensor] = [
         torch.Tensor([[[9, 3], [4, 10]], [[4, 11], [19, 7]], [[9, 23], [3, 12]]]),
         torch.Tensor([[[2, 8], [15, 19]], [[9, 2], [20, 9]], [[8, 12], [8, 17]]]),
         torch.Tensor([[[9, 5], [6, 13]], [[3, 10], [3, 8]], [[14, 8], [10, 12]]]),
@@ -31,7 +30,7 @@ class EcgSignalAugmenterTest(UnitTest):
 
     # valid mode/strategy combinations
     APPEND_ADD_AUGMENTATION_CONFIG_FILE: str = "ADD 0 1 APPEND"
-    X_APPEND_ADD: List[torch.Tensor] = [
+    X_APPEND_ADD: list[torch.Tensor] = [
         torch.Tensor(
             [
                 [[9, 3], [4, 10], [13, 13]],
@@ -63,7 +62,7 @@ class EcgSignalAugmenterTest(UnitTest):
     ]
 
     APPEND_NOISE_AUGMENTATION_CONFIG_FILE: str = "NOISE 0 1 APPEND"
-    X_APPEND_NOISE: List[torch.Tensor] = [
+    X_APPEND_NOISE: list[torch.Tensor] = [
         torch.Tensor(
             [
                 [[9.11, 4.31], [3.25, 10.05]],
@@ -95,7 +94,7 @@ class EcgSignalAugmenterTest(UnitTest):
     ]
 
     MODIFY_NOISE_AUGMENTATION_CONFIG_FILE: str = "NOISE 1 MODIFY"
-    X_MODIFY_NOISE: List[torch.Tensor] = [
+    X_MODIFY_NOISE: list[torch.Tensor] = [
         torch.Tensor([[[3.12, 10.21]], [[11.16, 7.09]], [[23.05, 12.1]]]),
         torch.Tensor([[[8.12, 19.2]], [[20.05, 9.23]], [[8.18, 17.31]]]),
         torch.Tensor([[[5.06, 13.2]], [[3.09, 8.23]], [[10.13, 12.05]]]),
@@ -105,7 +104,7 @@ class EcgSignalAugmenterTest(UnitTest):
     # invalid mode/strategy combinations
     MODIFY_ADD_AUGMENTATION_CONFIG_FILE: str = "ADD 0 1 MODIFY"
 
-    def setUp(self) -> None:
+    def setup_method(self) -> None:
         self.ecg_signal_augmenter: EcgSignalAugmenter = EcgSignalAugmenter(
             self.X.copy(), self.FILEPATH
         )
@@ -116,9 +115,8 @@ class EcgSignalAugmenterTest(UnitTest):
         read_data=INCORRECT_AUGMENTATION_MODE_IN_CONFIG_FILE,
     )
     def test_unknown_augmentation_mode(self, open_mock) -> None:
-        self.assertRaises(
-            UnknownAugmentationModeException, self.ecg_signal_augmenter.augment
-        )
+        with pytest.raises(UnknownAugmentationModeException):
+            self.ecg_signal_augmenter.augment()
 
     @patch(
         "builtins.open",
@@ -126,9 +124,8 @@ class EcgSignalAugmenterTest(UnitTest):
         read_data=INCORRECT_AUGMENTATION_STRATEGY_IN_CONFIG_FILE,
     )
     def test_unknown_augmentation_strategy(self, open_mock) -> None:
-        self.assertRaises(
-            UnknownAugmentationStrategyException, self.ecg_signal_augmenter.augment
-        )
+        with pytest.raises(UnknownAugmentationStrategyException):
+            self.ecg_signal_augmenter.augment()
 
     @patch(
         "builtins.open",
@@ -136,10 +133,12 @@ class EcgSignalAugmenterTest(UnitTest):
         read_data=APPEND_ADD_AUGMENTATION_CONFIG_FILE,
     )
     def test_append_add_augmentation(self, open_mock) -> None:
-        augmented_data: List[torch.Tensor] = self.ecg_signal_augmenter.augment()
+        augmented_data: list[torch.Tensor] = self.ecg_signal_augmenter.augment()
 
-        for actual_data, expected_data in zip(self.X_APPEND_ADD, augmented_data):
-            self.assertTrue(torch.equal(actual_data, expected_data))
+        for actual_data, expected_data in zip(
+            self.X_APPEND_ADD, augmented_data, strict=True
+        ):
+            assert torch.equal(actual_data, expected_data)
 
     @patch(
         "builtins.open",
@@ -147,10 +146,8 @@ class EcgSignalAugmenterTest(UnitTest):
         read_data=MODIFY_ADD_AUGMENTATION_CONFIG_FILE,
     )
     def test_modify_add_augmentation(self, open_mock) -> None:
-        self.assertRaises(
-            InvalidAugmentationStrategyAndModeCombinationException,
-            self.ecg_signal_augmenter.augment,
-        )
+        with pytest.raises(InvalidAugmentationStrategyAndModeCombinationException):
+            self.ecg_signal_augmenter.augment()
 
     @patch(
         "builtins.open",
@@ -162,16 +159,19 @@ class EcgSignalAugmenterTest(UnitTest):
         side_effect=[*X_APPEND_NOISE],
     )
     def test_append_noise_augmentation(self, noise_mock, open_mock) -> None:
-        augmented_data: List[torch.Tensor] = self.ecg_signal_augmenter.augment()
+        augmented_data: list[torch.Tensor] = self.ecg_signal_augmenter.augment()
 
         for actual_data, expected_data in zip(
             [
                 torch.cat((signal, augmented_signal), dim=1)
-                for signal, augmented_signal in zip(self.X, self.X_APPEND_NOISE)
+                for signal, augmented_signal in zip(
+                    self.X, self.X_APPEND_NOISE, strict=True
+                )
             ],
             augmented_data,
+            strict=True,
         ):
-            self.assertTrue(torch.equal(actual_data, expected_data))
+            assert torch.equal(actual_data, expected_data)
 
     @patch(
         "builtins.open",
@@ -183,7 +183,9 @@ class EcgSignalAugmenterTest(UnitTest):
         side_effect=[*X_MODIFY_NOISE],
     )
     def test_modify_noise_augmentation(self, noise_mock, open_mock) -> None:
-        augmented_data: List[torch.Tensor] = self.ecg_signal_augmenter.augment()
+        augmented_data: list[torch.Tensor] = self.ecg_signal_augmenter.augment()
 
-        for actual_data, expected_data in zip(self.X_MODIFY_NOISE, augmented_data):
-            self.assertTrue(torch.equal(actual_data, expected_data))
+        for actual_data, expected_data in zip(
+            self.X_MODIFY_NOISE, augmented_data, strict=True
+        ):
+            assert torch.equal(actual_data, expected_data)

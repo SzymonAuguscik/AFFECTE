@@ -1,14 +1,14 @@
 import numpy as np
+import pytest
 import torch
 
 from src.utils.LinkConstraintsLoss import LinkConstraintsLoss
-from tests import UnitTest
 
 
-class LinkConstraintsLossTest(UnitTest):
+class TestLinkConstraintsLoss:
     DEVICE: str = "cpu"
 
-    def setUp(self) -> None:
+    def setup_method(self) -> None:
         self.lc_loss: LinkConstraintsLoss = LinkConstraintsLoss(self.DEVICE)
 
     def test_link_constraints_loss(self) -> None:
@@ -24,4 +24,4 @@ class LinkConstraintsLossTest(UnitTest):
 
         loss: float = self.lc_loss(beta, e)
         expected_loss: float = 1.271564
-        self.assertAlmostEqual(loss, expected_loss)
+        assert loss == pytest.approx(expected_loss)
