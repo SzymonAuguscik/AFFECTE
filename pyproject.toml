@@ -86,6 +86,11 @@ python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
 check_untyped_defs = true
+exclude_gitignore = true
+
+[[tool.mypy.overrides]]
+module = ["scipy.*", "sklearn.*", "wfdb.*"]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

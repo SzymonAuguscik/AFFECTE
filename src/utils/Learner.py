@@ -1,8 +1,9 @@
 import logging
 import os
 import warnings
+from collections.abc import Iterator, Mapping
 from functools import reduce
-from typing import TextIO
+from typing import Protocol, Self, TextIO
 
 import numpy as np
 import torch
@@ -21,6 +22,27 @@ from src.utils.Timer import Timer
 from src.utils.Visualizer import Visualizer
 
 warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
+
+
+class LearnerModel(Protocol):
+    @property
+    def name(self) -> str: ...
+
+    @property
+    def hyperparameters(self) -> Mapping[str, int | float]: ...
+
+    @property
+    def embedded(self) -> torch.Tensor | None: ...
+
+    def to(self, device: torch.device) -> Self: ...
+
+    def parameters(self) -> Iterator[torch.nn.Parameter]: ...
+
+    def train(self, mode: bool = True) -> Self: ...
+
+    def eval(self) -> Self: ...
+
+    def __call__(self, x: torch.Tensor) -> torch.Tensor: ...
 
 
 class Learner:
@@ -90,7 +112,7 @@ class Learner:
 
     def __init__(
         self,
-        model: torch.nn.Module,
+        model: LearnerModel,
         X_train: torch.Tensor,
         y_train: torch.Tensor,
         X_test: torch.Tensor,
@@ -126,10 +148,8 @@ class Learner:
             The number of the epochs. In other words, the training duration.
 
         """
-        self._device: torch.device = (
-            "cpu"  # torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        )
-        self._model: torch.nn.Module = model.to(self._device)
+        self._device: torch.device = torch.device("cpu")
+        self._model: LearnerModel = model.to(self._device)
         self._X_train: torch.Tensor = X_train.to(self._device)
         self._y_train: torch.Tensor = y_train.to(self._device)
         self._X_test: torch.Tensor = X_test.to(self._device)
@@ -137,8 +157,8 @@ class Learner:
         self._seconds: int = seconds
         self._lr: float = lr
         self._batch_size: int = batch_size
-        self._entropy_loss: torch.nn.Module = torch.nn.BCELoss()
-        self._lc_loss: torch.nn.Module = LinkConstraintsLoss(self._device)
+        self._entropy_loss: torch.nn.BCELoss = torch.nn.BCELoss()
+        self._lc_loss: LinkConstraintsLoss = LinkConstraintsLoss(self._device)
         self._optimizer: torch.optim.Optimizer = torch.optim.Adam(
             self._model.parameters(), lr=self._lr
         )
@@ -173,11 +193,11 @@ class Learner:
 
         """
         test_data_loader: torch.utils.data.DataLoader = torch.utils.data.DataLoader(
-            X, batch_size=self._batch_size
+            torch.utils.data.TensorDataset(X), batch_size=self._batch_size
         )
         y_pred: np.ndarray = np.array([])
 
-        for x in test_data_loader:
+        for (x,) in test_data_loader:
             y_pred = np.append(y_pred, self._model(x).round().cpu().detach().numpy())
 
         y_pred = y_pred.reshape(-1, 1)
@@ -245,13 +265,7 @@ class Learner:
         file.write(header)
 
         for result in self._results:
-            metrics_row: str = (
-                reduce(
-                    lambda metric1, metric2: f"{metric1},{metric2}",
-                    map(lambda metric: result[metric], metrics),
-                )
-                + "\n"
-            )
+            metrics_row: str = ",".join(str(result[metric]) for metric in metrics) + "\n"
             file.write(metrics_row)
 
     def _save_metrics(self, file: TextIO) -> None:
@@ -370,7 +384,7 @@ class Learner:
         self._logger.debug("Starting timer...")
         self._timer.start()
         train_data_loader: torch.utils.data.DataLoader = torch.utils.data.DataLoader(
-            list(zip(self._X_train, self._y_train, strict=True)),
+            torch.utils.data.TensorDataset(self._X_train, self._y_train),
             shuffle=True,
             batch_size=self._batch_size,
         )
@@ -379,7 +393,7 @@ class Learner:
             self._model.train()
             self._logger.info(f"Epoch no. {epoch + 1}")
 
-            loss: float = 0
+            loss: torch.Tensor = torch.zeros((), device=self._device)
             for x, y in train_data_loader:
                 pred: torch.Tensor = self._model(x)
                 self._logger.debug("Calculating loss...")
@@ -469,8 +483,8 @@ class Learner:
         y_pred: np.ndarray = self._make_predictions(X)
         y_true: np.ndarray = y.cpu().detach().numpy()
 
-        self._logger.info(f"{int(sum(y)[0])}/{y.shape[0]} samples from test set are AF")
-        self._logger.info(f"{int(sum(y_pred)[0])}/{y_pred.shape[0]} samples marked as AF")
+        self._logger.info(f"{int(torch.sum(y).item())}/{y.shape[0]} samples from test set are AF")
+        self._logger.info(f"{int(np.sum(y_pred))}/{y_pred.shape[0]} samples marked as AF")
 
         tn: int
         fp: int

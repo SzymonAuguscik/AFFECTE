@@ -106,7 +106,7 @@ class TestUtils:
     CHANNEL_1: int = 0
     CHANNEL_2: int = 1
 
-    NOISE: np.array = np.array(
+    NOISE: np.ndarray = np.array(
         [
             [[0.58, 0.61, 0.51, 0.41]],
             [[0.91, 0.35, 0.61, 0.56]],
@@ -122,9 +122,7 @@ class TestUtils:
         assert Utils.format_time(self.TIME_IN_HOURS) == self.TIME_FORMAT
 
     def test_bandpass_filter(self) -> None:
-        assert np.allclose(
-            Utils.bandpass_filter(self.SIGNAL_TO_FILTER), self.FILTERED_SIGNAL
-        )
+        assert np.allclose(Utils.bandpass_filter(self.SIGNAL_TO_FILTER), self.FILTERED_SIGNAL)
 
     def test_preprocess_signal(self) -> None:
         signal = np.tile(self.SIGNAL_TO_PREPROCESS, (26, 1))
@@ -164,7 +162,7 @@ class TestUtils:
         signal_with_noise: torch.Tensor = Utils.add_noise_to_signal(
             self.SIGNAL, self.CHANNEL_1, self.CHANNEL_2
         )
-        assert torch.equal(signal_with_noise, self.SIGNAL + self.NOISE)
+        assert torch.equal(signal_with_noise, self.SIGNAL + torch.as_tensor(self.NOISE))
 
     @patch("enum.Enum")
     def test_invalid_enum_value(self, enum_mock) -> None:
@@ -175,7 +173,7 @@ class TestUtils:
     def test_valid_enum_value(self, enum_mock) -> None:
         enum_mock.__contains__.return_value = lambda _, item: item == self.ITEM
         enum_mock.__getitem__.return_value = self.ENUM_VALUE
-        item: type(enum_mock) = Utils.get_enum_value(self.ITEM, enum_mock, Exception)
+        item = Utils.get_enum_value(self.ITEM, enum_mock, Exception)
         enum_mock.__contains__.assert_called_with(self.ITEM)
         enum_mock.__getitem__.assert_called_with(self.ITEM)
         assert item == self.ENUM_VALUE

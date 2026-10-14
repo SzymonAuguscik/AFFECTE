@@ -70,7 +70,7 @@ class EcgSignalAugmenter:
     # TODO decorators?
     def _create_new_channel(
         self,
-        fun: Callable[[torch.Tensor, list[int]], torch.Tensor],
+        fun: Callable[..., torch.Tensor],
         channels: list[int],
         mode: AugmentationMode,
     ) -> None:
@@ -89,14 +89,14 @@ class EcgSignalAugmenter:
             or a new channel should be appended.
 
         """
+        signals = self._ecg_signal
+
         if mode == AugmentationMode.APPEND:
-            self._ecg_signal: list[torch.Tensor] = [
-                torch.cat((signal, fun(signal, *channels)), dim=1) for signal in self._ecg_signal
+            self._ecg_signal = [
+                torch.cat((signal, fun(signal, *channels)), dim=1) for signal in signals
             ]
         if mode == AugmentationMode.MODIFY:
-            self._ecg_signal: list[torch.Tensor] = [
-                fun(signal, *channels) for signal in self._ecg_signal
-            ]
+            self._ecg_signal = [fun(signal, *channels) for signal in signals]
 
     def _is_augmentation_strategy_and_mode_combination_valid(
         self, strategy: AugmentationStrategy, mode: AugmentationMode
@@ -141,7 +141,7 @@ class EcgSignalAugmenter:
 
         """
         if not self._is_augmentation_strategy_and_mode_combination_valid(strategy, mode):
-            raise InvalidAugmentationStrategyAndModeCombinationException(strategy, mode)
+            raise InvalidAugmentationStrategyAndModeCombinationException(strategy.value, mode.value)
         # TODO new strategies
         if strategy == AugmentationStrategy.ADD:
             self._logger.debug(f"Adding channels {channels}")
@@ -165,19 +165,16 @@ class EcgSignalAugmenter:
         self._logger.info("Augmenting ECG data")
         with open(self._steps_file_path) as steps:
             for step in steps:
-                strategy: str
-                channels: list[int]
-                mode: str
-                strategy, *channels, mode = step.split()
-                channels = [int(channel) for channel in channels]
+                strategy_name, *channel_names, mode_name = step.split()
+                channels: list[int] = [int(channel) for channel in channel_names]
                 self._augment_on_strategy(
                     get_enum_value(
-                        strategy,
+                        strategy_name,
                         AugmentationStrategy,
                         UnknownAugmentationStrategyException,
                     ),
                     channels,
-                    get_enum_value(mode, AugmentationMode, UnknownAugmentationModeException),
+                    get_enum_value(mode_name, AugmentationMode, UnknownAugmentationModeException),
                 )
 
         return self._ecg_signal

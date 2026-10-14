@@ -114,15 +114,15 @@ class AtrialFibrillationDetector(torch.nn.Module):
         )
         self._logger.info(f"Model {self._name}")
 
-        self._cnn: Cnn = (
+        self._cnn: Cnn | None = (
             Cnn(ecg_channels, window_length, transformer_dimension) if self._use_cnn else None
         )
-        self._linear: torch.nn.Linear = (
+        self._linear: torch.nn.Linear | None = (
             torch.nn.Linear(window_length, transformer_dimension)
             if self._use_transformer and not self._use_cnn
             else None
         )
-        self._transformer: Transformer = (
+        self._transformer: Transformer | None = (
             Transformer(
                 d_model=transformer_dimension,
                 hidden_dimension=transformer_hidden_dimension,
@@ -139,7 +139,7 @@ class AtrialFibrillationDetector(torch.nn.Module):
         self._logger.debug(f"FeedForwardClassifier input dimension = {ffc_input_dimension}")
         self._ffc: FeedForwardClassifier = FeedForwardClassifier(ffc_input_dimension)
 
-        self._hyperparameters: dict[str, float] = {
+        self._hyperparameters: dict[str, int] = {
             Hyperparameters.Names.TRANSFORMER_DIMENSION: transformer_dimension,
             Hyperparameters.Names.ECG_CHANNELS: ecg_channels,
             Hyperparameters.Names.WINDOW_LENGTH: window_length,
@@ -209,14 +209,17 @@ class AtrialFibrillationDetector(torch.nn.Module):
         self._logger.debug(f"Data size: {x.size()}")
 
         if self._use_cnn:
+            assert self._cnn is not None
             x = self._cnn(x)
             self._logger.debug("cnn(x) done")
             self._logger.debug(f"Data size: {x.size()}")
         if self._use_transformer:
             if not self._use_cnn:
+                assert self._linear is not None
                 x = self._linear(x)
                 self._logger.debug("linear(x) done")
                 self._logger.debug(f"Data size: {x.size()}")
+            assert self._transformer is not None
             x = self._transformer(x)
             self._embedded = x
             self._logger.debug("transformer(x) done")

@@ -202,7 +202,8 @@ class EcgSignalLoader:
 
         self._logger.debug("Preprocessing signal: resampling, 2 median filters and bandpass filter")
         signal: np.ndarray = preprocess_signal(record.p_signal, record.fs)
-        rhythm_intervals[start_symbol].append((start_sample, len(signal)))
+        if start_symbol is not None:
+            rhythm_intervals[start_symbol].append((start_sample, len(signal)))
         rhythm_intervals = {
             symbol: rhythm_intervals[symbol] for symbol in Tags.CLASSIFICATION_SYMBOLS
         }

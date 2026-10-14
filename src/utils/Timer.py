@@ -46,7 +46,7 @@ class Timer:
         self._measured_time = time.time() - self._start_time
         self._logger.debug(f"Measured time = {self._measured_time}s")
 
-    def get_time(self) -> float | None:
+    def get_time(self) -> float:
         """
         Return measured time.
 

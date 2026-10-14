@@ -8,7 +8,7 @@ from src.utils.CrossValidator import CrossValidator
 
 
 def get_multiple_indices(array: list[Any], indices: list[int]) -> list[Any]:
-    return itemgetter(*indices)(array)
+    return list(itemgetter(*indices)(array))
 
 
 class TestCrossValidator:

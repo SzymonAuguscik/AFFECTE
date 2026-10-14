@@ -135,9 +135,7 @@ class TestEcgSignalAugmenter:
     def test_append_add_augmentation(self, open_mock) -> None:
         augmented_data: list[torch.Tensor] = self.ecg_signal_augmenter.augment()
 
-        for actual_data, expected_data in zip(
-            self.X_APPEND_ADD, augmented_data, strict=True
-        ):
+        for actual_data, expected_data in zip(self.X_APPEND_ADD, augmented_data, strict=True):
             assert torch.equal(actual_data, expected_data)
 
     @patch(
@@ -164,9 +162,7 @@ class TestEcgSignalAugmenter:
         for actual_data, expected_data in zip(
             [
                 torch.cat((signal, augmented_signal), dim=1)
-                for signal, augmented_signal in zip(
-                    self.X, self.X_APPEND_NOISE, strict=True
-                )
+                for signal, augmented_signal in zip(self.X, self.X_APPEND_NOISE, strict=True)
             ],
             augmented_data,
             strict=True,
@@ -185,7 +181,5 @@ class TestEcgSignalAugmenter:
     def test_modify_noise_augmentation(self, noise_mock, open_mock) -> None:
         augmented_data: list[torch.Tensor] = self.ecg_signal_augmenter.augment()
 
-        for actual_data, expected_data in zip(
-            self.X_MODIFY_NOISE, augmented_data, strict=True
-        ):
+        for actual_data, expected_data in zip(self.X_MODIFY_NOISE, augmented_data, strict=True):
             assert torch.equal(actual_data, expected_data)

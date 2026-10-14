@@ -347,26 +347,46 @@ class Cnn(torch.nn.Module):
             )
             input_dim = Hyperparameters.Cnn.MINIMAL_INPUT_DIMENSION
 
-        mutable_size_layers: list[torch.nn.Module] = [
+        mutable_size_layers: list[torch.nn.Conv1d | torch.nn.MaxPool1d] = [
             module
             for module in self.modules()
             if isinstance(module, torch.nn.Conv1d) or isinstance(module, torch.nn.MaxPool1d)
         ]
-        conv_pool_layers_pairs: list[tuple[torch.nn.Module, torch.nn.Module]] = list(
-            zip(mutable_size_layers[0::2], mutable_size_layers[1::2], strict=True)
-        )
+        conv_pool_layers_pairs: list[
+            tuple[
+                torch.nn.Conv1d | torch.nn.MaxPool1d,
+                torch.nn.Conv1d | torch.nn.MaxPool1d,
+            ]
+        ] = list(zip(mutable_size_layers[0::2], mutable_size_layers[1::2], strict=True))
         dim: int = input_dim
         self._logger.debug(f"Input dim = {dim}")
 
         for conv, maxpool in conv_pool_layers_pairs:
+            assert isinstance(conv, torch.nn.Conv1d)
+            assert isinstance(maxpool, torch.nn.MaxPool1d)
+            conv_padding = conv.padding[0]
+            assert isinstance(conv_padding, int)
+
+            maxpool_kernel_size = maxpool.kernel_size
+            if isinstance(maxpool_kernel_size, tuple):
+                maxpool_kernel_size = maxpool_kernel_size[0]
+            maxpool_padding = maxpool.padding
+            if isinstance(maxpool_padding, tuple):
+                maxpool_padding = maxpool_padding[0]
+            maxpool_stride = maxpool.stride
+            if maxpool_stride is None:
+                maxpool_stride = maxpool_kernel_size
+            elif isinstance(maxpool_stride, tuple):
+                maxpool_stride = maxpool_stride[0]
+
             dim = self._calculate_next_layer_size(
                 dim,
                 conv.kernel_size[0],
-                conv.padding[0],
+                conv_padding,
                 conv.stride[0],
-                maxpool.kernel_size,
-                maxpool.padding,
-                maxpool.stride,
+                maxpool_kernel_size,
+                maxpool_padding,
+                maxpool_stride,
             )
 
         dim *= self._channels

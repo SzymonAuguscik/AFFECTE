@@ -75,13 +75,13 @@ class CrossValidator:
         self._logger: logging.Logger = logging.getLogger(__name__)
         self._folds: list[dict[str, list[torch.Tensor]]] = self._cross_validation_split()
 
-    def __iter__(self) -> Iterator[list[dict[str, list[torch.Tensor]]]]:
+    def __iter__(self) -> Iterator[dict[str, list[torch.Tensor]]]:
         """
         Returns the iterator to the next fold.
 
         Returns
         -------
-        Iterator[List[Dict[str, List[torch.Tensor]]]]
+        Iterator[Dict[str, List[torch.Tensor]]]
             The iterator to the next fold.
 
         """
