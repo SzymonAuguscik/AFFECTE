@@ -68,22 +68,16 @@ Run exemplary *affecte* container (you can add *affecte.py* arguments at the end
 docker compose run --rm affecte
 ```
 
-### venv approach
+### uv approach
 
-Create virtual environment for *AFFECTE* and activate it:
+Create virtual environment for *AFFECTE*:
 ```bash
-python3.10 -m venv affecte_venv
-source affecte_venv/bin/activate
-```
-
-Install required libraries:
-```bash
-venv/bin/pip3 install -r requirements.txt
+uv sync
 ```
 
 Verify setup by running exemplary script:
 ```bash
-affecte_venv/bin/python3.10 affecte.py
+uv run affecte.py
 ```
 
 ## Usage
