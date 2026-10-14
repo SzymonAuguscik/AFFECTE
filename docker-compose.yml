@@ -16,4 +16,14 @@ services:
     user: "${UID}:${GID}"
     volumes:
       - ./tests:/affecte/tests:ro
-    command: ["python3", "-W", "ignore:UserWarning", "-m", "pytest", "-q"]
+    command:
+      [
+        "python3",
+        "-W",
+        "ignore:UserWarning",
+        "-m",
+        "pytest",
+        "-q",
+        "-o",
+        "cache_dir=/tmp/pytest_cache",
+      ]
