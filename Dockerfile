@@ -1,27 +1,29 @@
 FROM python:3.12-slim AS tools
-# no gcc in python:3.12-slim
+
 RUN apt-get update && \
-    apt-get install -y gcc=4:14.2.0-1 --no-install-recommends
+    apt-get install -y --no-install-recommends \
+        build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 
-FROM python:3.12-slim AS libraries
-
-COPY --from=tools /bin/gcc /bin/uv /bin/
+FROM tools AS libraries
 
 WORKDIR /usr
-COPY requirements.txt .
 
-RUN --mount=type=cache,target=/root/.cache \
-    uv pip install -r requirements.txt --system
+COPY pyproject.toml uv.lock ./
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --locked --no-install-project
 
 FROM python:3.12-slim AS app
 
-COPY --from=libraries /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
-
-ENV MPLCONFIGDIR=/tmp/matplotlib
-
 WORKDIR /affecte
+
+COPY --from=libraries /usr/.venv /usr/.venv
+
+ENV PATH="/usr/.venv/bin:$PATH"
+ENV MPLCONFIGDIR=/tmp/matplotlib
 
 COPY affecte.py .
 COPY src ./src
