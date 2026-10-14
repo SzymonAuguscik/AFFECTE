@@ -1,9 +1,8 @@
-from src.exceptions.TimerNotStartedException import TimerNotStartedException
-from src.exceptions.TimerNotStoppedException import TimerNotStoppedException
-from typing import Optional
-
 import logging
 import time
+
+from src.exceptions.TimerNotStartedException import TimerNotStartedException
+from src.exceptions.TimerNotStoppedException import TimerNotStoppedException
 
 
 class Timer:
@@ -28,10 +27,11 @@ class Timer:
     measured_time = timer.get_time()
 
     """
+
     def __init__(self) -> None:
         """Initiate the timer with default logger."""
-        self._start_time: Optional[float] = None
-        self._measured_time: Optional[float] = None
+        self._start_time: float | None = None
+        self._measured_time: float | None = None
         self._logger: logging.Logger = logging.getLogger(__name__)
 
     def start(self) -> None:
@@ -46,7 +46,7 @@ class Timer:
         self._measured_time = time.time() - self._start_time
         self._logger.debug(f"Measured time = {self._measured_time}s")
 
-    def get_time(self) -> Optional[float]:
+    def get_time(self) -> float:
         """
         Return measured time.
 
@@ -64,4 +64,3 @@ class Timer:
         if self._measured_time is not None:
             return self._measured_time
         raise TimerNotStoppedException()
-

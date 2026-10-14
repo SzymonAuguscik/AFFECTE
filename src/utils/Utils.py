@@ -1,21 +1,22 @@
+import logging
+import sys
 import warnings
-warnings.filterwarnings("ignore", category=SyntaxWarning)
-from wfdb.processing import resample_sig
-from typing import List, Any, TypeVar
-from src.constants import Time
-from math import floor
 from enum import Enum
+from math import floor
+from typing import Any, cast
 
 import numpy as np
-
 import scipy.signal
-import logging
 import torch
-import sys
+from wfdb.processing import resample_sig
+
+from src.constants import Time
+
+warnings.filterwarnings("ignore", category=SyntaxWarning)
 
 
 def format_time(time_in_hours: float) -> str:
-    """"
+    """ "
     Format time from hours to hours, minutes, and seconds.
 
     Parameters
@@ -35,6 +36,7 @@ def format_time(time_in_hours: float) -> str:
     seconds: int = round((precise_minutes - minutes) * Time.SECONDS_IN_MINUTE)
     return f"{hours}:{minutes}:{seconds}"
 
+
 def bandpass_filter(signal: np.ndarray) -> np.ndarray:
     """
     Apply bandpass filter on the signal.
@@ -51,7 +53,8 @@ def bandpass_filter(signal: np.ndarray) -> np.ndarray:
 
     """
     b, a = scipy.signal.butter(N=5, Wn=(0.5, 35), btype="bandpass", fs=128)
-    return scipy.signal.lfilter(b, a, signal)
+    return cast(np.ndarray, scipy.signal.lfilter(b, a, signal))
+
 
 def preprocess_signal(signal: np.ndarray, fs: float) -> np.ndarray:
     """
@@ -82,6 +85,7 @@ def preprocess_signal(signal: np.ndarray, fs: float) -> np.ndarray:
         signal[:, i] -= bandpass_filter(signal[:, i])
     return signal
 
+
 def align_format(record: logging.LogRecord) -> bool:
     """
     Align format for logging purposes (e.g. in handlers).
@@ -104,7 +108,8 @@ def align_format(record: logging.LogRecord) -> bool:
     record.levelname = f"[{record.levelname}]"
     return True
 
-def init_logger(name: str = None) -> logging.Logger:
+
+def init_logger(name: str | None = None) -> logging.Logger:
     """
     Create default logger used in classes across project.
 
@@ -120,13 +125,16 @@ def init_logger(name: str = None) -> logging.Logger:
 
     """
     handler: logging.StreamHandler = logging.StreamHandler(sys.stdout)
-    formatter: logging.Formatter = logging.Formatter('%(asctime)s:%(levelname)-10s:%(name)-40s:  %(message)s')
+    formatter: logging.Formatter = logging.Formatter(
+        "%(asctime)s:%(levelname)-10s:%(name)-40s:  %(message)s"
+    )
     handler.setFormatter(formatter)
     handler.addFilter(align_format)
     logger: logging.Logger = logging.getLogger(name)
     logger.setLevel(logging.INFO)
     logger.addHandler(handler)
     return logger
+
 
 def add(ecg_signal: torch.Tensor, channel_1: int, channel_2: int) -> torch.Tensor:
     """
@@ -146,9 +154,10 @@ def add(ecg_signal: torch.Tensor, channel_1: int, channel_2: int) -> torch.Tenso
         New ECG signal channel (N x 1 x V size).
 
     """
-    return (ecg_signal[:,channel_1,:] + ecg_signal[:,channel_2,:]).unsqueeze(1)
+    return (ecg_signal[:, channel_1, :] + ecg_signal[:, channel_2, :]).unsqueeze(1)
 
-def add_noise_to_signal(ecg_signal: torch.Tensor, *channels: List[int]) -> torch.Tensor:
+
+def add_noise_to_signal(ecg_signal: torch.Tensor, *channels: int) -> torch.Tensor:
     """
     Add Gaussian noise to the signal.
 
@@ -163,11 +172,20 @@ def add_noise_to_signal(ecg_signal: torch.Tensor, *channels: List[int]) -> torch
     -------
         New ECG signal channel (N x C x V size).
     """
-    mean = torch.mean(ecg_signal[:, channels, :])
-    std = torch.std(ecg_signal[:, channels, :])
-    return ecg_signal[:, channels, :] + np.random.normal(mean, std, ecg_signal[:, channels, :].size()).astype(np.float32)
+    selected_channels: list[int] = list(channels)
+    mean = torch.mean(ecg_signal[:, selected_channels, :])
+    std = torch.std(ecg_signal[:, selected_channels, :])
+    noise = torch.as_tensor(
+        np.random.normal(mean, std, ecg_signal[:, selected_channels, :].size()).astype(np.float32),
+        dtype=ecg_signal.dtype,
+        device=ecg_signal.device,
+    )
+    return ecg_signal[:, selected_channels, :] + noise
 
-def get_enum_value(item: Any, enum_class: Enum, exception: TypeVar('Exception', bound='Exception')) -> Enum:
+
+def get_enum_value[EnumType: Enum](
+    item: Any, enum_class: type[EnumType], exception: type[Exception]
+) -> EnumType:
     """
     Get item from enumeration type.
 
@@ -189,7 +207,7 @@ def get_enum_value(item: Any, enum_class: Enum, exception: TypeVar('Exception', 
     -------
         Enumeration type item.
     """
-    if item not in enum_class:
+    enum_class_any: Any = enum_class
+    if item not in enum_class_any:
         raise exception(item)
-    return enum_class[item]
-
+    return cast(EnumType, enum_class_any[item])

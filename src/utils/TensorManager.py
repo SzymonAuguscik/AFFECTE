@@ -1,9 +1,11 @@
+import logging
+import warnings
 from typing import Any
 
-import warnings
-import logging
 import torch
+
 warnings.filterwarnings("ignore", category=FutureWarning)
+
 
 class TensorManager:
     """
@@ -24,6 +26,7 @@ class TensorManager:
     manager.save(y, "/new/path/to/labels")
 
     """
+
     def __init__(self) -> None:
         """Initiate TensorManager with default logger"""
         self._logger: logging.Logger = logging.getLogger(__name__)
@@ -60,4 +63,3 @@ class TensorManager:
         """
         self._logger.debug(f"Saving tensor to {path}")
         torch.save(tensor, path)
-

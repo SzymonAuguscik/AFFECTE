@@ -1,13 +1,14 @@
-
 import warnings
+
 import torch
+
 warnings.filterwarnings("ignore", category=UserWarning)
 
 
 class LinkConstraintsLoss(torch.nn.Module):
     """
-    LinkConstraintsLoss is used as a regularization method. It relies on creating links between vectors/embeddings
-    from the same class.
+    LinkConstraintsLoss is used as a regularization method.
+    It relies on creating links between vectors/embeddings from the same class.
 
     Attributes
     ----------
@@ -35,6 +36,7 @@ class LinkConstraintsLoss(torch.nn.Module):
     https://bmcmedinformdecismak.biomedcentral.com/articles/10.1186/s12911-021-01546-2
 
     """
+
     def __init__(self, device: torch.device) -> None:
         """
         Initiate LinkConstraintsLoss with calculation device.
@@ -45,7 +47,7 @@ class LinkConstraintsLoss(torch.nn.Module):
             The device to perform calculation on.
 
         """
-        super(LinkConstraintsLoss, self).__init__()
+        super().__init__()
         self._device: torch.device = device
 
     def forward(self, beta: torch.Tensor, e: torch.Tensor) -> float:
@@ -69,4 +71,3 @@ class LinkConstraintsLoss(torch.nn.Module):
         j: torch.Tensor = torch.arange(beta.size(0)).to(self._device)
         loss: float = 0.5 * torch.norm(beta[i, 0] - e[i, j] * beta[j, 0], p=2).item()
         return loss
-

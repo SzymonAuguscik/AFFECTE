@@ -1,18 +1,22 @@
-from .FeedForwardClassifier import FeedForwardClassifier
-from src.constants import Hyperparameters
-from .Transformer import Transformer
-from typing import Dict, Optional
-from .Cnn import Cnn
-
 import logging
+
 import torch
+
+from src.constants import Hyperparameters
+
+from .Cnn import Cnn
+from .FeedForwardClassifier import FeedForwardClassifier
+from .Transformer import Transformer
 
 
 class AtrialFibrillationDetector(torch.nn.Module):
     """
-    AtrialFibrillationDetector is a model that can consist of several simpler subnetworks. It can be specified if Cnn or Transformer should be used.
-    The only mandatory subnetwork is Feed Forward Network (FFN) which serves as a classification head. The model provides a necessary "connector" layers
-    which will automatically adapt the flow of data between subnetworks. This architecture is inspired by the paper mentioned in `See also` section.
+    AtrialFibrillationDetector is a model that can consist of several simpler
+    subnetworks. It can be specified if Cnn or Transformer should be used.
+    The only mandatory subnetwork is Feed Forward Network (FFN) which serves
+    as a classification head. The model provides a necessary "connector" layers
+    which will automatically adapt the flow of data between subnetworks.
+    This architecture is inspired by the paper mentioned in `See also` section.
 
     Attributes
     ----------
@@ -27,22 +31,30 @@ class AtrialFibrillationDetector(torch.nn.Module):
     _cnn : Cnn
         The Cnn subnetwork which can be used for data embedding.
     _linear : torch.nn.Linear
-        The linear layer that is used when only Cnn subnetwork is not used (in order to fit multichannel data to the Transformer).
+        The linear layer that is used when only Cnn subnetwork is not used
+        (in order to fit multichannel data to the Transformer).
     _transformer : Transformer
-        The Transformer subnetwork that can be used to catch long-term dependencies in ECG signal.
+        The Transformer subnetwork that can be used
+        to catch long-term dependencies in ECG signal.
     _ffc : FeedForwardClassifier
         Feed Forward Network subnetwork which is a classification head.
     _hyperparameters : Dict[str, float]
         The names and values of the model hyperparameters.
     _embedded : Optional[torch.Tensor]
-        The output of the Transformer subnetwork. It is present only if _use_transformer is set to True.
+        The output of the Transformer subnetwork.
+        It is present only if _use_transformer is set to True.
 
     Examples
     --------
     X = <load features e.g. from EcgSignalLoader>
-    model = AtrialFibrillationDetector(transformer_dimension=64, ecg_channels=2, window_length=128,
-                                       transformer_hidden_dimension=256, transformer_heads=16, transformer_encoder_layers=8,
-                                       use_cnn=False, use_transformer=True)
+    model = AtrialFibrillationDetector(transformer_dimension=64,
+                                       ecg_channels=2,
+                                       window_length=128,
+                                       transformer_hidden_dimension=256,
+                                       transformer_heads=16,
+                                       transformer_encoder_layers=8,
+                                       use_cnn=False,
+                                       use_transformer=True)
     predictions = model(X)
 
     for name, value in model.hyperparameters.items():
@@ -53,11 +65,21 @@ class AtrialFibrillationDetector(torch.nn.Module):
     https://bmcmedinformdecismak.biomedcentral.com/articles/10.1186/s12911-021-01546-2
 
     """
-    def __init__(self, transformer_dimension: int, ecg_channels: int, window_length: int,
-                 transformer_hidden_dimension: int, transformer_heads: int, transformer_encoder_layers: int,
-                 use_cnn: bool = False, use_transformer: bool = False) -> None:
+
+    def __init__(
+        self,
+        transformer_dimension: int,
+        ecg_channels: int,
+        window_length: int,
+        transformer_hidden_dimension: int,
+        transformer_heads: int,
+        transformer_encoder_layers: int,
+        use_cnn: bool = False,
+        use_transformer: bool = False,
+    ) -> None:
         """
-        Initiates AtrialFibrillationDetector with respect to the hyperparameters and chosen subnetworks.
+        Initiates AtrialFibrillationDetector with respect
+        to the hyperparameters and chosen subnetworks.
 
         Parameters
         ----------
@@ -67,7 +89,8 @@ class AtrialFibrillationDetector(torch.nn.Module):
         ecg_channels : int
             The number of channels for the input data.
         window_length : int
-            The length of the sliding window that where used to split the original signal into chunks.
+            The length of the sliding window
+            that was used to split the original signal into chunks.
             It is related to the number of seconds chosen during dataset preparations.
         transformer_hidden_dimension : int
             The dimension for Transformer feed forward layers.
@@ -81,35 +104,51 @@ class AtrialFibrillationDetector(torch.nn.Module):
             It indicates if Transformer network should be used in the model.
 
         """
-        super(AtrialFibrillationDetector, self).__init__()
+        super().__init__()
         self._logger: logging.Logger = logging.getLogger(__name__)
 
         self._use_cnn: bool = use_cnn
         self._use_transformer: bool = use_transformer
-        self._name: str = f"AFD({'CNN,' if self._use_cnn else ''}{'TN,' if self._use_transformer else ''}FFN)"
+        self._name: str = (
+            f"AFD({'CNN,' if self._use_cnn else ''}{'TN,' if self._use_transformer else ''}FFN)"
+        )
         self._logger.info(f"Model {self._name}")
 
-        self._cnn: Cnn = Cnn(ecg_channels, window_length, transformer_dimension) if self._use_cnn else None
-        self._linear: torch.nn.Linear = torch.nn.Linear(window_length, transformer_dimension) if self._use_transformer and not self._use_cnn else None
-        self._transformer: Transformer = Transformer(d_model=transformer_dimension,
-                                                     hidden_dimension=transformer_hidden_dimension,
-                                                     heads_number=transformer_heads,
-                                                     encoder_layers=transformer_encoder_layers) if self._use_transformer else None
-        
-        ffc_input_dimension: int = transformer_dimension if self._use_cnn or self._use_transformer else window_length
+        self._cnn: Cnn | None = (
+            Cnn(ecg_channels, window_length, transformer_dimension) if self._use_cnn else None
+        )
+        self._linear: torch.nn.Linear | None = (
+            torch.nn.Linear(window_length, transformer_dimension)
+            if self._use_transformer and not self._use_cnn
+            else None
+        )
+        self._transformer: Transformer | None = (
+            Transformer(
+                d_model=transformer_dimension,
+                hidden_dimension=transformer_hidden_dimension,
+                heads_number=transformer_heads,
+                encoder_layers=transformer_encoder_layers,
+            )
+            if self._use_transformer
+            else None
+        )
+
+        ffc_input_dimension: int = (
+            transformer_dimension if self._use_cnn or self._use_transformer else window_length
+        )
         self._logger.debug(f"FeedForwardClassifier input dimension = {ffc_input_dimension}")
         self._ffc: FeedForwardClassifier = FeedForwardClassifier(ffc_input_dimension)
 
-        self._hyperparameters: Dict[str, float] = {
-            Hyperparameters.Names.TRANSFORMER_DIMENSION        : transformer_dimension,
-            Hyperparameters.Names.ECG_CHANNELS                 : ecg_channels,
-            Hyperparameters.Names.WINDOW_LENGTH                : window_length,
-            Hyperparameters.Names.TRANSFORMER_HIDDEN_DIMENSION : transformer_hidden_dimension,
-            Hyperparameters.Names.TRANSFORMER_HEADS            : transformer_heads,
-            Hyperparameters.Names.TRANSFORMER_ENCODER_LAYERS   : transformer_encoder_layers,
+        self._hyperparameters: dict[str, int] = {
+            Hyperparameters.Names.TRANSFORMER_DIMENSION: transformer_dimension,
+            Hyperparameters.Names.ECG_CHANNELS: ecg_channels,
+            Hyperparameters.Names.WINDOW_LENGTH: window_length,
+            Hyperparameters.Names.TRANSFORMER_HIDDEN_DIMENSION: transformer_hidden_dimension,
+            Hyperparameters.Names.TRANSFORMER_HEADS: transformer_heads,
+            Hyperparameters.Names.TRANSFORMER_ENCODER_LAYERS: transformer_encoder_layers,
         }
 
-        self._embedded: Optional[torch.Tensor] = None
+        self._embedded: torch.Tensor | None = None
 
     @property
     def name(self) -> str:
@@ -125,7 +164,7 @@ class AtrialFibrillationDetector(torch.nn.Module):
         return self._name
 
     @property
-    def hyperparameters(self) -> Dict[str, int]:
+    def hyperparameters(self) -> dict[str, int]:
         """
         Return the model hyperparameters.
 
@@ -138,7 +177,7 @@ class AtrialFibrillationDetector(torch.nn.Module):
         return self._hyperparameters
 
     @property
-    def embedded(self) -> Optional[torch.Tensor]:
+    def embedded(self) -> torch.Tensor | None:
         """
         Return the embedded vectors from Transformer.
 
@@ -170,14 +209,17 @@ class AtrialFibrillationDetector(torch.nn.Module):
         self._logger.debug(f"Data size: {x.size()}")
 
         if self._use_cnn:
+            assert self._cnn is not None
             x = self._cnn(x)
             self._logger.debug("cnn(x) done")
             self._logger.debug(f"Data size: {x.size()}")
         if self._use_transformer:
             if not self._use_cnn:
+                assert self._linear is not None
                 x = self._linear(x)
                 self._logger.debug("linear(x) done")
-                self._logger.debug(f"Data size: {x.size()}")    
+                self._logger.debug(f"Data size: {x.size()}")
+            assert self._transformer is not None
             x = self._transformer(x)
             self._embedded = x
             self._logger.debug("transformer(x) done")
@@ -186,4 +228,3 @@ class AtrialFibrillationDetector(torch.nn.Module):
         self._logger.debug("ff(x) done")
         self._logger.debug(f"Data size: {x.size()}")
         return x
-

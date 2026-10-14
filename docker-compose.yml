@@ -1,18 +1,33 @@
 services:
   affecte:
-    build: .
+    build:
+      context: .
+      target: app
     image: affecte-image:latest
     container_name: affecte
     user: "${UID}:${GID}"
     volumes:
       - ./data/long-term-af-database-1.0.0:/affecte/data/long-term-af-database-1.0.0
+      - ./data/datasets:/affecte/data/datasets
       - ./results:/affecte/results
     entrypoint: ["python3", "affecte.py"]
   unit_tests:
-    build: .
+    build:
+      context: .
+      target: unit_tests
     image: affecte-uts:latest
     container_name: unit_tests
     user: "${UID}:${GID}"
     volumes:
       - ./tests:/affecte/tests:ro
-    command: ["python3", "-W", "ignore:UserWarning", "-m", "unittest", "discover", "-s", "tests", "-p", "*.py", "-q"]
+    command:
+      [
+        "python3",
+        "-W",
+        "ignore:UserWarning",
+        "-m",
+        "pytest",
+        "-q",
+        "-o",
+        "cache_dir=/tmp/pytest_cache",
+      ]

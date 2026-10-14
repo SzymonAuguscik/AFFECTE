@@ -1,27 +1,44 @@
 FROM python:3.12-slim AS tools
-# no gcc in python:3.12-slim
+
 RUN apt-get update && \
-    apt-get install -y gcc=4:14.2.0-1 --no-install-recommends
+    apt-get install -y --no-install-recommends \
+        build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 
-FROM python:3.12-slim AS libraries
-
-COPY --from=tools /bin/gcc /bin/uv /bin/
+FROM tools AS app-libraries
 
 WORKDIR /usr
-COPY requirements.txt .
 
-RUN --mount=type=cache,target=/root/.cache \
-    uv pip install -r requirements.txt --system
+COPY pyproject.toml uv.lock ./
 
-FROM python:3.12-slim AS app
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --locked --no-install-project --no-dev --extra cu130
 
-COPY --from=libraries /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+FROM tools AS test-libraries
 
-ENV MPLCONFIGDIR=/tmp/matplotlib
+WORKDIR /usr
+
+COPY pyproject.toml uv.lock ./
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --locked --no-install-project --extra cpu
+
+FROM python:3.12-slim AS runtime
 
 WORKDIR /affecte
 
+ENV PATH="/usr/.venv/bin:$PATH"
+ENV MPLCONFIGDIR=/tmp/matplotlib
+
 COPY affecte.py .
 COPY src ./src
+
+FROM runtime AS app
+
+COPY --from=app-libraries /usr/.venv /usr/.venv
+
+FROM runtime AS unit_tests
+
+COPY --from=test-libraries /usr/.venv /usr/.venv

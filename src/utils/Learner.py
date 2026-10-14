@@ -1,25 +1,56 @@
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
-from src.utils.LinkConstraintsLoss import LinkConstraintsLoss
-from src.constants import Results, Paths, Hyperparameters
-from sklearn.exceptions import UndefinedMetricWarning
-from typing import Dict, List, TextIO, Optional
-from src.utils.Visualizer import Visualizer
-from src.utils.Timer import Timer
+import logging
+import os
+import warnings
+from collections.abc import Iterator, Mapping
 from functools import reduce
+from typing import Protocol, Self, TextIO
 
 import numpy as np
-
-import warnings
-import logging
 import torch
-import os
+from sklearn.exceptions import UndefinedMetricWarning
+from sklearn.metrics import (
+    accuracy_score,
+    confusion_matrix,
+    f1_score,
+    precision_score,
+    recall_score,
+)
+
+from src.constants import Hyperparameters, Paths, Results
+from src.utils.LinkConstraintsLoss import LinkConstraintsLoss
+from src.utils.Timer import Timer
+from src.utils.Visualizer import Visualizer
+
 warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
+
+
+class LearnerModel(Protocol):
+    @property
+    def name(self) -> str: ...
+
+    @property
+    def hyperparameters(self) -> Mapping[str, int | float]: ...
+
+    @property
+    def embedded(self) -> torch.Tensor | None: ...
+
+    def to(self, device: torch.device) -> Self: ...
+
+    def parameters(self) -> Iterator[torch.nn.Parameter]: ...
+
+    def train(self, mode: bool = True) -> Self: ...
+
+    def eval(self) -> Self: ...
+
+    def __call__(self, x: torch.Tensor) -> torch.Tensor: ...
 
 
 class Learner:
     """
-    Learner is a wrapper for training and testing model. It provides the trainable model with the typical learning hyperparameters (like batch size
-    or learning rate). Besides training and testing purposes, it enables to measure the time of the training or store, save and visualize training/test results.
+    Learner is a wrapper for training and testing model.
+    It provides the trainable model with the typical learning hyperparameters (like batch size
+    or learning rate). Besides training and testing purposes, it enables
+    to measure the time of the training or store, save and visualize training/test results.
 
     Parameters
     ----------
@@ -58,7 +89,8 @@ class Learner:
     _results : List[Dict[str, float]]
         The results of the model, gathered after testing it.
     _hyperparameters : Dict[str, float]
-        All hyperparameters of the Learner: model's hyperparameters and seconds, batch size, learning rate, and epochs.
+        All hyperparameters of the Learner:
+        model's hyperparameters and seconds, batch size, learning rate, and epochs.
 
     Examples
     --------
@@ -70,17 +102,29 @@ class Learner:
     for step, fold in enumerate(cv):
         model = MyCustomModel() # exemplary torch.nn.Module
         X_train, y_train, X_test, y_test = cv.prepare_fold(fold)
-        learner = Learner(model=model, X_train=X_train, y_train=y_train, X_test=X_test, y_test=y_test,
-                          seconds=seconds, lr=0.001, batch_size=128, epochs=150)
+        learner = Learner(model=model, X_train=X_train, y_train=y_train, X_test=X_test,
+                          y_test=y_test, seconds=seconds, lr=0.001, batch_size=128, epochs=150)
         learner.train()
         learner.test(X_test, y_test)
         learner.save_results(step)
 
     """
-    def __init__(self, model: torch.nn.Module, X_train: torch.Tensor, y_train: torch.Tensor, X_test: torch.Tensor, y_test: torch.Tensor,
-                 seconds: int, lr: float, batch_size: int, epochs: int) -> None:
+
+    def __init__(
+        self,
+        model: LearnerModel,
+        X_train: torch.Tensor,
+        y_train: torch.Tensor,
+        X_test: torch.Tensor,
+        y_test: torch.Tensor,
+        seconds: int,
+        lr: float,
+        batch_size: int,
+        epochs: int,
+    ) -> None:
         """
-        Initiate Learner with given model and data (features and labels for training/test) and common learning hyperparameters.
+        Initiate Learner with given model and data (features and labels for training/test)
+        and common learning hyperparameters.
 
         Parameters
         ----------
@@ -104,8 +148,8 @@ class Learner:
             The number of the epochs. In other words, the training duration.
 
         """
-        self._device: torch.device = "cpu"#torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self._model: torch.nn.Module = model.to(self._device)
+        self._device: torch.device = torch.device("cpu")
+        self._model: LearnerModel = model.to(self._device)
         self._X_train: torch.Tensor = X_train.to(self._device)
         self._y_train: torch.Tensor = y_train.to(self._device)
         self._X_test: torch.Tensor = X_test.to(self._device)
@@ -113,19 +157,21 @@ class Learner:
         self._seconds: int = seconds
         self._lr: float = lr
         self._batch_size: int = batch_size
-        self._entropy_loss: torch.nn.Module = torch.nn.BCELoss()
-        self._lc_loss: torch.nn.Module = LinkConstraintsLoss(self._device)
-        self._optimizer: torch.optim.Optimizer = torch.optim.Adam(self._model.parameters(), lr=self._lr)
+        self._entropy_loss: torch.nn.BCELoss = torch.nn.BCELoss()
+        self._lc_loss: LinkConstraintsLoss = LinkConstraintsLoss(self._device)
+        self._optimizer: torch.optim.Optimizer = torch.optim.Adam(
+            self._model.parameters(), lr=self._lr
+        )
         self._epochs: int = epochs
         self._visualizer: Visualizer = Visualizer()
         self._timer: Timer = Timer()
         self._logger: logging.Logger = logging.getLogger(__name__)
-        self._results: List[Dict[str, float]] = []
-        self._hyperparameters: Dict[str, float] = {
-            Hyperparameters.Names.SECONDS       : self._seconds,
-            Hyperparameters.Names.LEARNING_RATE : self._lr,
-            Hyperparameters.Names.BATCH_SIZE    : self._batch_size,
-            Hyperparameters.Names.EPOCHS        : self._epochs,
+        self._results: list[dict[str, float]] = []
+        self._hyperparameters: dict[str, float] = {
+            Hyperparameters.Names.SECONDS: self._seconds,
+            Hyperparameters.Names.LEARNING_RATE: self._lr,
+            Hyperparameters.Names.BATCH_SIZE: self._batch_size,
+            Hyperparameters.Names.EPOCHS: self._epochs,
             **self._model.hyperparameters,
         }
         self._logger.debug(f"Layers: {len([param for param in model.parameters()])}")
@@ -146,10 +192,12 @@ class Learner:
             Predictions returned by _model.
 
         """
-        test_data_loader: torch.utils.data.DataLoader = torch.utils.data.DataLoader(X, batch_size=self._batch_size)
+        test_data_loader: torch.utils.data.DataLoader = torch.utils.data.DataLoader(
+            torch.utils.data.TensorDataset(X), batch_size=self._batch_size
+        )
         y_pred: np.ndarray = np.array([])
 
-        for x in test_data_loader:
+        for (x,) in test_data_loader:
             y_pred = np.append(y_pred, self._model(x).round().cpu().detach().numpy())
 
         y_pred = y_pred.reshape(-1, 1)
@@ -157,7 +205,8 @@ class Learner:
 
     def _get_link_coefficients(self, y_batch: torch.Tensor) -> torch.Tensor:
         """
-        Create link coefficients based on label vectors. If vectors are from the same class, the link between them should be made
+        Create link coefficients based on label vectors.
+        If vectors are from the same class, the link between them should be made
         (link coefficient is 1). Otherwise, no link is created (link coefficient is 0).
 
         Parameters
@@ -183,7 +232,8 @@ class Learner:
 
     def _build_dirname(self) -> str:
         """
-        Create a result directory name based on the model name, hyperparameters names and their values.
+        Create a result directory name based on
+        the model name, hyperparameters names and their values.
         It is used for saving results and plots.
 
         Returns
@@ -191,9 +241,11 @@ class Learner:
         str
             The path to the result directory.
         """
-        dirname: str = reduce(lambda directory_name, parameter: f"{directory_name}_{parameter[0]}{parameter[1]}",
-                              self._hyperparameters.items(),
-                              self._model.name)
+        dirname: str = reduce(
+            lambda directory_name, parameter: f"{directory_name}_{parameter[0]}{parameter[1]}",
+            self._hyperparameters.items(),
+            self._model.name,
+        )
         return os.path.join(Paths.Directories.RESULTS, dirname)
 
     def _save_selected_metrics(self, file: TextIO, *metrics: str) -> None:
@@ -209,18 +261,17 @@ class Learner:
 
         """
         self._logger.debug(f"Metrics to be saved: {metrics}")
-        header: str = ",".join(metrics) + '\n'
+        header: str = ",".join(metrics) + "\n"
         file.write(header)
 
         for result in self._results:
-            metrics_row: str = reduce(lambda metric1, metric2: f"{metric1},{metric2}",
-                               map(lambda metric: result[metric], metrics)) \
-                               + '\n'
+            metrics_row: str = ",".join(str(result[metric]) for metric in metrics) + "\n"
             file.write(metrics_row)
 
     def _save_metrics(self, file: TextIO) -> None:
         """
-        Save metrics to the specified file. There are 8 metrics saved: TN, FP, FN, TP, accuracy, F1 score, precision, recall, and specificity.
+        Save metrics to the specified file. There are 8 metrics saved:
+        TN, FP, FN, TP, accuracy, F1 score, precision, recall, and specificity.
 
         Parameters
         ----------
@@ -229,8 +280,21 @@ class Learner:
 
         """
         self._logger.debug(f"Saving metrics to {file}")
-        self._save_selected_metrics(file, Results.Metrics.TN, Results.Metrics.FP, Results.Metrics.FN, Results.Metrics.TP)
-        self._save_selected_metrics(file, Results.Metrics.ACCURACY, Results.Metrics.F1_SCORE, Results.Metrics.PRECISION, Results.Metrics.RECALL, Results.Metrics.SPECIFICITY)
+        self._save_selected_metrics(
+            file,
+            Results.Metrics.TN,
+            Results.Metrics.FP,
+            Results.Metrics.FN,
+            Results.Metrics.TP,
+        )
+        self._save_selected_metrics(
+            file,
+            Results.Metrics.ACCURACY,
+            Results.Metrics.F1_SCORE,
+            Results.Metrics.PRECISION,
+            Results.Metrics.RECALL,
+            Results.Metrics.SPECIFICITY,
+        )
 
     def _save_training_time(self, file: TextIO) -> None:
         """
@@ -261,7 +325,8 @@ class Learner:
     def _plot_metrics(self, dirname: str) -> None:
         """
         Plot metrics gathered throughout the training and save the plots into specified directory.
-        The plotted metrics are: training loss and training/test accuracy, F1 score, precision, recall, and specificity.
+        The plotted metrics are: training loss and training/test accuracy,
+        F1 score, precision, recall, and specificity.
 
         Parameters
         ----------
@@ -271,53 +336,74 @@ class Learner:
         """
         self._logger.debug("Creating plots...")
         self._visualizer.plot_train_loss(os.path.join(dirname, Results.Visualization.Files.LOSS))
-        self._visualizer.plot_learning_curves(os.path.join(dirname, Results.Visualization.Files.ACCURACY),\
-                                              Results.Metrics.TRAIN_ACCURACY,\
-                                              Results.Metrics.TEST_ACCURACY)
-        self._visualizer.plot_learning_curves(os.path.join(dirname, Results.Visualization.Files.F1_SCORE),\
-                                              Results.Metrics.TRAIN_F1_SCORE,\
-                                              Results.Metrics.TEST_F1_SCORE)
-        self._visualizer.plot_learning_curves(os.path.join(dirname, Results.Visualization.Files.PRECISION),\
-                                              Results.Metrics.TRAIN_PRECISION,\
-                                              Results.Metrics.TEST_PRECISION)
-        self._visualizer.plot_learning_curves(os.path.join(dirname, Results.Visualization.Files.RECALL),\
-                                              Results.Metrics.TRAIN_RECALL,\
-                                              Results.Metrics.TEST_RECALL)
-        self._visualizer.plot_learning_curves(os.path.join(dirname, Results.Visualization.Files.SPECIFICITY),\
-                                              Results.Metrics.TRAIN_SPECIFICITY,\
-                                              Results.Metrics.TEST_SPECIFICITY)
+        self._visualizer.plot_learning_curves(
+            os.path.join(dirname, Results.Visualization.Files.ACCURACY),
+            Results.Metrics.TRAIN_ACCURACY,
+            Results.Metrics.TEST_ACCURACY,
+        )
+        self._visualizer.plot_learning_curves(
+            os.path.join(dirname, Results.Visualization.Files.F1_SCORE),
+            Results.Metrics.TRAIN_F1_SCORE,
+            Results.Metrics.TEST_F1_SCORE,
+        )
+        self._visualizer.plot_learning_curves(
+            os.path.join(dirname, Results.Visualization.Files.PRECISION),
+            Results.Metrics.TRAIN_PRECISION,
+            Results.Metrics.TEST_PRECISION,
+        )
+        self._visualizer.plot_learning_curves(
+            os.path.join(dirname, Results.Visualization.Files.RECALL),
+            Results.Metrics.TRAIN_RECALL,
+            Results.Metrics.TEST_RECALL,
+        )
+        self._visualizer.plot_learning_curves(
+            os.path.join(dirname, Results.Visualization.Files.SPECIFICITY),
+            Results.Metrics.TRAIN_SPECIFICITY,
+            Results.Metrics.TEST_SPECIFICITY,
+        )
 
     def train(self) -> None:
         """
-        Train _model. The data is split into batches, then the model is repeatedly fed with those batches.
-        During the training part, for each epoch, the loss is calculated. Its value depends on the embedded attribute of a model
-        (which is not None when model contains Transformer). When it is available, both entropy loss and link constraint loss are taken into account.
-        Otherwise, link constraint one is skipped. For every batch the gradients are calculated based on the loss which are then used by optimizer.
-        During the evaluation part, the model makes predictions and is evaluated with 4 metrics: F1 score, accuracy, precision, recall, and specificity.
-        referring to the training and test features/labels separately. The visualizer saves those metrics for further plotting purposes.
+        Train _model. The data is split into batches,
+        then the model is repeatedly fed with those batches.
+        During the training part, for each epoch, the loss is calculated.
+        Its value depends on the embedded attribute of a model
+        (which is not None when model contains Transformer).
+        When it is available, both entropy loss and link constraint loss are taken into account.
+        Otherwise, link constraint one is skipped.
+        For every batch the gradients are calculated based on the loss
+        which are then used by optimizer.
+        During the evaluation part, the model makes predictions and is evaluated with 4 metrics:
+        F1 score, accuracy, precision, recall, and specificity.
+        referring to the training and test features/labels separately.
+        The visualizer saves those metrics for further plotting purposes.
 
         """
         self._logger.info("Training model...")
         self._logger.debug(f"Using {self._device} device")
         self._logger.debug("Starting timer...")
         self._timer.start()
-        train_data_loader: torch.utils.data.DataLoader = torch.utils.data.DataLoader(list(zip(self._X_train, self._y_train)), shuffle=True, batch_size=self._batch_size)
-        
+        train_data_loader: torch.utils.data.DataLoader = torch.utils.data.DataLoader(
+            torch.utils.data.TensorDataset(self._X_train, self._y_train),
+            shuffle=True,
+            batch_size=self._batch_size,
+        )
+
         for epoch in range(self._epochs):
             self._model.train()
             self._logger.info(f"Epoch no. {epoch + 1}")
 
-            loss: float = 0
-            for (x, y) in train_data_loader:
+            loss: torch.Tensor = torch.zeros((), device=self._device)
+            for x, y in train_data_loader:
                 pred: torch.Tensor = self._model(x)
                 self._logger.debug("Calculating loss...")
                 loss = self._entropy_loss(pred, y)
 
-                embedded: Optional[torch.Tensor] = self._model.embedded
+                embedded: torch.Tensor | None = self._model.embedded
                 if embedded is not None:
                     link_coefficients: torch.Tensor = self._get_link_coefficients(y)
                     loss += 1e-8 * self._lc_loss(embedded, link_coefficients)
-                
+
                 self._logger.debug("Updating weights...")
                 self._optimizer.zero_grad()
                 loss.backward()
@@ -354,7 +440,7 @@ class Learner:
             self._logger.debug(f"Precision score = {test_precision}")
             self._logger.debug(f"Recall score = {test_recall}")
             self._logger.debug(f"Specificity score = {test_specificity}")
-            
+
             self._visualizer.update_metric(Results.Metrics.LOSS, loss.item())
 
             self._visualizer.update_metric(Results.Metrics.TRAIN_ACCURACY, train_accuracy)
@@ -368,7 +454,7 @@ class Learner:
             self._visualizer.update_metric(Results.Metrics.TEST_PRECISION, test_precision)
             self._visualizer.update_metric(Results.Metrics.TEST_RECALL, test_recall)
             self._visualizer.update_metric(Results.Metrics.TEST_SPECIFICITY, test_specificity)
-        
+
         self._logger.debug("Stopping timer...")
         self._timer.stop()
         training_time: float = round(self._timer.get_time())
@@ -376,8 +462,10 @@ class Learner:
 
     def test(self, X: torch.Tensor, y: torch.Tensor) -> None:
         """
-        Test model with given features and expected labels. After setting model into evaluation mode, the model makes predictions
-        which are then evaluated with 8 metrics: TN, FP, FN, TP, F1 score, accuracy, precision, recall, and specificity.
+        Test model with given features and expected labels.
+        After setting model into evaluation mode, the model makes predictions
+        which are then evaluated with 8 metrics:
+        TN, FP, FN, TP, F1 score, accuracy, precision, recall, and specificity.
         Those results are then stored.
 
         Parameters
@@ -395,8 +483,8 @@ class Learner:
         y_pred: np.ndarray = self._make_predictions(X)
         y_true: np.ndarray = y.cpu().detach().numpy()
 
-        self._logger.info(f"{int(sum(y)[0])}/{y.shape[0]} samples from test set are AF")
-        self._logger.info(f"{int(sum(y_pred)[0])}/{y_pred.shape[0]} samples marked as AF")
+        self._logger.info(f"{int(torch.sum(y).item())}/{y.shape[0]} samples from test set are AF")
+        self._logger.info(f"{int(np.sum(y_pred))}/{y_pred.shape[0]} samples marked as AF")
 
         tn: int
         fp: int
@@ -420,28 +508,30 @@ class Learner:
         self._logger.debug(f"Recall: {recall}")
         self._logger.debug(f"Specificity: {specificity}")
 
-        results: Dict[str, float] = {
-            Results.Metrics.TN          : tn,
-            Results.Metrics.FP          : fp,
-            Results.Metrics.FN          : fn,
-            Results.Metrics.TP          : tp,
-            Results.Metrics.ACCURACY    : accuracy,
-            Results.Metrics.F1_SCORE    : f1_metric,
-            Results.Metrics.PRECISION   : precision,
-            Results.Metrics.RECALL      : recall,
-            Results.Metrics.SPECIFICITY : specificity,
+        results: dict[str, float] = {
+            Results.Metrics.TN: tn,
+            Results.Metrics.FP: fp,
+            Results.Metrics.FN: fn,
+            Results.Metrics.TP: tp,
+            Results.Metrics.ACCURACY: accuracy,
+            Results.Metrics.F1_SCORE: f1_metric,
+            Results.Metrics.PRECISION: precision,
+            Results.Metrics.RECALL: recall,
+            Results.Metrics.SPECIFICITY: specificity,
         }
         self._results.append(results)
 
     def save_results(self, fold: int) -> None:
         """
-        Save results for the specified cross validation fold. Saved results are: metrics, training time and device name.
+        Save results for the specified cross validation fold. Saved results are: metrics,
+        training time and device name.
         It also creates necessary directories if needed.
 
         Parameters
         ----------
         fold : int
-            The fold number which results are referring to. It also indicates the directory to save results.
+            The fold number which results are referring to.
+            It also indicates the directory to save results.
 
         """
         self._logger.debug("Saving results...")
@@ -460,10 +550,9 @@ class Learner:
 
         results_filename: str = os.path.join(fold_dirname, Paths.Files.RESULTS)
 
-        with open(results_filename, 'w') as file:
+        with open(results_filename, "w") as file:
             self._save_metrics(file)
             self._save_training_time(file)
             self._save_device_name(file)
 
         self._plot_metrics(fold_dirname)
-
