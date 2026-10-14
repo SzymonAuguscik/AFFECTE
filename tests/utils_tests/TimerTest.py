@@ -1,7 +1,8 @@
+from unittest.mock import patch
+
 from src.exceptions.TimerNotStartedException import TimerNotStartedException
 from src.exceptions.TimerNotStoppedException import TimerNotStoppedException
 from src.utils.Timer import Timer
-from unittest.mock import patch
 from tests import UnitTest
 
 

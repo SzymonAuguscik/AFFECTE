@@ -1,5 +1,6 @@
+from unittest.mock import MagicMock, patch
+
 from src.utils.TensorManager import TensorManager
-from unittest.mock import patch, MagicMock
 from tests import UnitTest
 
 

@@ -1,6 +1,7 @@
+from typing import List
+
 from src.utils.Visualizer import Visualizer
 from tests import UnitTest
-from typing import List
 
 
 class VisualizerTest(UnitTest):

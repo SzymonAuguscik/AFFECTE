@@ -1,7 +1,8 @@
-from src.constants import Hyperparameters
-
 import logging
+
 import torch
+
+from src.constants import Hyperparameters
 
 
 class Transformer(torch.nn.Module):

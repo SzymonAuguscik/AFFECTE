@@ -2,21 +2,21 @@
 AFFECTE - Atrial Fibrillation Finder from Electrocardiogram with Convolution and Transformer Encoder
 """
 
-from src.utils.Utils import init_logger
-from src.models.AtrialFibrillationDetector import AtrialFibrillationDetector
-from src.utils.CrossValidator import CrossValidator
-from src.utils.Learner import Learner
-from src.utils.EcgSignalAugmenter import EcgSignalAugmenter
-from src.utils.EcgSignalLoader import EcgSignalLoader
-from typing import List
-from src.constants import Paths
-
-import numpy as np
-
 import argparse
 import logging
 import random
+from typing import List
+
+import numpy as np
 import torch
+
+from src.constants import Paths
+from src.models.AtrialFibrillationDetector import AtrialFibrillationDetector
+from src.utils.CrossValidator import CrossValidator
+from src.utils.EcgSignalAugmenter import EcgSignalAugmenter
+from src.utils.EcgSignalLoader import EcgSignalLoader
+from src.utils.Learner import Learner
+from src.utils.Utils import init_logger
 
 torch.cuda.empty_cache()
 seed: int = 1234

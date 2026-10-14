@@ -1,11 +1,11 @@
-from src.utils.EcgSignalLoader import EcgSignalLoader
-from unittest.mock import patch, mock_open
-from tests import UnitTest
 from typing import List
+from unittest.mock import mock_open, patch
 
 import numpy as np
-
 import torch
+
+from src.utils.EcgSignalLoader import EcgSignalLoader
+from tests import UnitTest
 
 
 class EcgSignalLoaderTest(UnitTest):

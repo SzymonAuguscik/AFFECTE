@@ -1,10 +1,11 @@
-from src.utils.CrossValidator import CrossValidator
-from unittest.mock import patch
 from operator import itemgetter
-from typing import List, Any
-from tests import UnitTest
+from typing import Any, List
+from unittest.mock import patch
 
 import torch
+
+from src.utils.CrossValidator import CrossValidator
+from tests import UnitTest
 
 
 def get_multiple_indices(array: List[Any], indices: List[int]) -> List[Any]:

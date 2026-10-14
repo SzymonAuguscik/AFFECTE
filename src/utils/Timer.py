@@ -1,9 +1,9 @@
-from src.exceptions.TimerNotStartedException import TimerNotStartedException
-from src.exceptions.TimerNotStoppedException import TimerNotStoppedException
-from typing import Optional
-
 import logging
 import time
+from typing import Optional
+
+from src.exceptions.TimerNotStartedException import TimerNotStartedException
+from src.exceptions.TimerNotStoppedException import TimerNotStoppedException
 
 
 class Timer:

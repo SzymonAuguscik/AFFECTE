@@ -1,8 +1,9 @@
-from src.constants import Hyperparameters
+import logging
 from typing import List, Tuple
 
-import logging
 import torch
+
+from src.constants import Hyperparameters
 
 
 class Cnn(torch.nn.Module):

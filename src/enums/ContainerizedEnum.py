@@ -1,5 +1,5 @@
-from typing import Any
 from enum import EnumMeta
+from typing import Any
 
 
 class ContainerizedEnum(EnumMeta):

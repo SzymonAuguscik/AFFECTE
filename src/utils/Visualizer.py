@@ -1,8 +1,9 @@
-from matplotlib import pyplot as plt
-from src.constants import Results
+import logging
 from typing import Dict, List
 
-import logging
+from matplotlib import pyplot as plt
+
+from src.constants import Results
 
 
 class Visualizer:

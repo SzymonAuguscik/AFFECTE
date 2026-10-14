@@ -1,11 +1,13 @@
-from .FeedForwardClassifier import FeedForwardClassifier
-from src.constants import Hyperparameters
-from .Transformer import Transformer
-from typing import Dict, Optional
-from .Cnn import Cnn
-
 import logging
+from typing import Dict, Optional
+
 import torch
+
+from src.constants import Hyperparameters
+
+from .Cnn import Cnn
+from .FeedForwardClassifier import FeedForwardClassifier
+from .Transformer import Transformer
 
 
 class AtrialFibrillationDetector(torch.nn.Module):

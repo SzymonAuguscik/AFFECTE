@@ -1,18 +1,19 @@
+from typing import List
+from unittest.mock import mock_open, patch
+
+import torch
+
 from src.exceptions.InvalidAugmentationStrategyAndModeCombinationException import (
     InvalidAugmentationStrategyAndModeCombinationException,
-)
-from src.exceptions.UnknownAugmentationStrategyException import (
-    UnknownAugmentationStrategyException,
 )
 from src.exceptions.UnknownAugmentationModeException import (
     UnknownAugmentationModeException,
 )
+from src.exceptions.UnknownAugmentationStrategyException import (
+    UnknownAugmentationStrategyException,
+)
 from src.utils.EcgSignalAugmenter import EcgSignalAugmenter
-from unittest.mock import patch, mock_open
 from tests import UnitTest
-from typing import List
-
-import torch
 
 
 class EcgSignalAugmenterTest(UnitTest):

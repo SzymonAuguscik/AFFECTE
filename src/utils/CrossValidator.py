@@ -1,9 +1,10 @@
-from typing import Optional, Iterator, Dict, List, Tuple
-from src.constants import CV
-
 import logging
+from typing import Dict, Iterator, List, Optional, Tuple
+
 import sklearn
 import torch
+
+from src.constants import CV
 
 
 class CrossValidator:

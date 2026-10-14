@@ -1,18 +1,18 @@
+import logging
+import sys
 import warnings
-
-warnings.filterwarnings("ignore", category=SyntaxWarning)
-from wfdb.processing import resample_sig
-from typing import List, Any, TypeVar
-from src.constants import Time
-from math import floor
 from enum import Enum
+from math import floor
+from typing import Any, List, TypeVar
 
 import numpy as np
-
 import scipy.signal
-import logging
 import torch
-import sys
+from wfdb.processing import resample_sig
+
+from src.constants import Time
+
+warnings.filterwarnings("ignore", category=SyntaxWarning)
 
 
 def format_time(time_in_hours: float) -> str:

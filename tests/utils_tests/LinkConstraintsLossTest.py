@@ -1,9 +1,8 @@
+import numpy as np
+import torch
+
 from src.utils.LinkConstraintsLoss import LinkConstraintsLoss
 from tests import UnitTest
-
-import numpy as np
-
-import torch
 
 
 class LinkConstraintsLossTest(UnitTest):

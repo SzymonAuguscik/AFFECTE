@@ -1,24 +1,24 @@
-from sklearn.metrics import (
-    accuracy_score,
-    precision_score,
-    recall_score,
-    f1_score,
-    confusion_matrix,
-)
-from src.utils.LinkConstraintsLoss import LinkConstraintsLoss
-from src.constants import Results, Paths, Hyperparameters
-from sklearn.exceptions import UndefinedMetricWarning
-from typing import Dict, List, TextIO, Optional
-from src.utils.Visualizer import Visualizer
-from src.utils.Timer import Timer
+import logging
+import os
+import warnings
 from functools import reduce
+from typing import Dict, List, Optional, TextIO
 
 import numpy as np
-
-import warnings
-import logging
 import torch
-import os
+from sklearn.exceptions import UndefinedMetricWarning
+from sklearn.metrics import (
+    accuracy_score,
+    confusion_matrix,
+    f1_score,
+    precision_score,
+    recall_score,
+)
+
+from src.constants import Hyperparameters, Paths, Results
+from src.utils.LinkConstraintsLoss import LinkConstraintsLoss
+from src.utils.Timer import Timer
+from src.utils.Visualizer import Visualizer
 
 warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
 

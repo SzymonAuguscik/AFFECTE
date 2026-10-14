@@ -1,14 +1,14 @@
-from src.utils.Utils import preprocess_signal, format_time
-from src.utils.TensorManager import TensorManager
-from typing import List, Tuple, Optional, Dict
-from src.constants import Tags, Time, Paths
+import logging
+import os
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
-
-import logging
 import torch
 import wfdb
-import os
+
+from src.constants import Paths, Tags, Time
+from src.utils.TensorManager import TensorManager
+from src.utils.Utils import format_time, preprocess_signal
 
 
 class EcgSignalLoader:

@@ -1,5 +1,5 @@
-from src.models.Cnn import Cnn
 from src.constants import Hyperparameters
+from src.models.Cnn import Cnn
 from tests import UnitTest
 
 

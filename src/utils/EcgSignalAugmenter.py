@@ -1,19 +1,20 @@
+import logging
+from typing import Callable, List
+
+import torch
+
+from src.enums.AugmentationMode import AugmentationMode
+from src.enums.AugmentationStrategy import AugmentationStrategy
 from src.exceptions.InvalidAugmentationStrategyAndModeCombinationException import (
     InvalidAugmentationStrategyAndModeCombinationException,
-)
-from src.exceptions.UnknownAugmentationStrategyException import (
-    UnknownAugmentationStrategyException,
 )
 from src.exceptions.UnknownAugmentationModeException import (
     UnknownAugmentationModeException,
 )
+from src.exceptions.UnknownAugmentationStrategyException import (
+    UnknownAugmentationStrategyException,
+)
 from src.utils.Utils import add, add_noise_to_signal, get_enum_value
-from src.enums.AugmentationStrategy import AugmentationStrategy
-from src.enums.AugmentationMode import AugmentationMode
-from typing import List, Callable
-
-import logging
-import torch
 
 
 class EcgSignalAugmenter:

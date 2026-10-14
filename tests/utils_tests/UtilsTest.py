@@ -1,12 +1,12 @@
-from unittest.mock import patch
-from tests import UnitTest
+import logging
 from typing import Type
+from unittest.mock import patch
+
+import numpy as np
+import torch
 
 import src.utils.Utils as Utils
-import numpy as np
-
-import logging
-import torch
+from tests import UnitTest
 
 
 class UtilsTest(UnitTest):
